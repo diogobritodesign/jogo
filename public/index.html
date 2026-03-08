@@ -669,7 +669,7 @@ function handle(m){
     case 'room_update':myRoom=m.room;isHost=myRoom.host_id===myId;renderLobby();break;
     case 'left_room':myRoom=null;showScreen('menu');break;
     case 'game_started':toast('⚡ Partida iniciada!');isSpectating=false;showScreen('game');if(myRoom?.players)showDealAnimation(myRoom.players);break;
-    case 'game_state':gameState=m.state;renderGame();updateTimer(m.state);break;
+    case 'game_state':gameState=m.state;if(targetMode&&m.state.currentPlayerId!==myId){targetMode=null;}if(!targetMode)renderGame();updateTimer(m.state);break;
     case 'sim_state': {
       // Simulation spectator mode — render using a synthetic game state
       const s=m;
@@ -1014,15 +1014,15 @@ function renderOpponents(g,me){
     const isTurn=g.currentPlayerId===myId;
     const d=document.createElement('div');d.className='opp-seat';d.dataset.pos='self';
     // Dead life cards — revealed face-up as full-sized dead cards (cards ARE lives; dead = flipped, visible, unusable)
-    const deadLivesHtml=me.livesRevealed.map((rev,i)=>{
-      if(!rev||!me.lives[i]) return '';
-      const c=me.lives[i];
-      return `<div class="self-hcard dead" data-card="${esc(c)}" title="${esc(c)} — eliminada"><div class="self-hcard-icon">${IC[c]||'☠'}</div><div class="self-hcard-lbl">${esc(c)}</div></div>`;
-    }).join('');
-    // Show actual hand cards (others only see '?' — only self gets real values)
-    const handHtml=!me.eliminated&&me.hand&&me.hand.length>0
-      ? me.hand.map(c=>`<div class="self-hcard" data-card="${esc(c)}" title="Inspecionar ${esc(c)}" onclick="openCardInspect('${esc(c)}')" style="cursor:zoom-in"><div class="self-hcard-icon">${IC[c]||'?'}</div><div class="self-hcard-lbl">${esc(c)}</div></div>`).join('')
-      : '';
+    const deadCards=me.livesRevealed.map((rev,i)=>{
+      if(!rev||!me.lives[i]) return null;
+      return me.lives[i];
+    }).filter(Boolean);
+    const deadLivesHtml=deadCards.map(c=>`<div class="self-hcard dead" data-card="${esc(c)}" title="${esc(c)} — eliminada"><div class="self-hcard-icon">${IC[c]||'☠'}</div><div class="self-hcard-lbl">${esc(c)}</div></div>`).join('');
+    // Show actual hand cards — limited so total cards (active + dead) = 2
+    const maxHand=Math.max(0,2-deadCards.length);
+    const visibleHand=(!me.eliminated&&me.hand&&me.hand.length>0)?me.hand.slice(0,maxHand):[];
+    const handHtml=visibleHand.map(c=>`<div class="self-hcard" data-card="${esc(c)}" title="Inspecionar ${esc(c)}" onclick="openCardInspect('${esc(c)}')" style="cursor:zoom-in"><div class="self-hcard-icon">${IC[c]||'?'}</div><div class="self-hcard-lbl">${esc(c)}</div></div>`).join('');
     d.innerHTML=`<div class="seat-wrap${isTurn?' my-turn':''}${me.eliminated?' out':''}" id="oppcard-self">
       ${isTurn?'<div class="turn-arr">▼</div>':''}
       <div class="seat-cards">${handHtml}${deadLivesHtml}</div>
