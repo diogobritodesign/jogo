@@ -1,0 +1,21 @@
+{
+  "name": "system-breach",
+  "version": "2.0.0",
+  "description": "System Breach - Card Bluff Game",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "deploy": "bash deploy.sh"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.5.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.1.1",
+    "sql.js": "^1.10.2",
+    "uuid": "^9.0.0",
+    "ws": "^8.16.0"
+  }
+}

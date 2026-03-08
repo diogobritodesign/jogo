@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>System Breach — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--cyan:#00f5ff;--magenta:#ff00ff;--dark:#04080f;--border:rgba(0,245,255,.18);--text:#c8e6ff;--dim:rgba(200,230,255,.4);--danger:#ff1744;--gold:#ffd600;--green:#00e676;--bg:#02060e}
+[data-theme="dark-matter"]{--cyan:#25ace8;--magenta:#1d6586;--dark:#101218;--bg:#0c0e12;--border:rgba(37,172,232,.22);--text:#b8d4f0;--dim:rgba(180,210,240,.38);--danger:#ff4466;--gold:#e8c840;--green:#00d066}
+[data-theme="cyberpunk"]{--cyan:#72eaf8;--magenta:#f3e600;--dark:#17000d;--bg:#0d0008;--border:rgba(114,234,248,.22);--text:#e0e0e0;--dim:rgba(224,224,224,.4);--danger:#ff003c;--gold:#f3e600;--green:#47d58b}
+[data-theme="soft"]{--cyan:#8b9cf4;--magenta:#d48af7;--dark:#1a1a2e;--bg:#13131f;--border:rgba(139,156,244,.22);--text:#d0d8ff;--dim:rgba(180,192,255,.4);--danger:#f06090;--gold:#e8c860;--green:#60d090}
+[data-theme="crimson"]{--cyan:#ff2244;--magenta:#ff7700;--dark:#130007;--bg:#0c0004;--border:rgba(255,34,68,.28);--text:#ffd0d8;--dim:rgba(255,160,160,.45);--danger:#ff0022;--gold:#ffcc44;--green:#44ee88}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,245,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,.025) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+
+/* LOGIN */
+.login-wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:100;background:var(--bg)}
+.login-box{background:rgba(4,12,26,.95);border:1px solid var(--border);border-radius:6px;padding:36px;width:380px;position:relative;overflow:hidden}
+.login-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),var(--magenta),transparent)}
+.logo{font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:900;letter-spacing:.1em;background:linear-gradient(135deg,var(--cyan),var(--magenta));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+.logo-sub{font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--dim);letter-spacing:.3em;margin-bottom:24px}
+
+/* LAYOUT */
+.admin-wrap{display:none;min-height:100vh;position:relative;z-index:1}
+.admin-wrap.active{display:block}
+.topbar{background:rgba(2,6,14,.97);border-bottom:1px solid var(--border);padding:0 24px;height:52px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:50}
+.tb-logo{font-family:'Orbitron',monospace;font-size:.9rem;font-weight:900;letter-spacing:.12em;background:linear-gradient(135deg,var(--cyan),var(--magenta));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.tb-badge{font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--dim);letter-spacing:.2em}
+.tb-online{font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--green)}
+.tb-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.tb-logout{font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--danger);cursor:pointer;border:1px solid rgba(255,23,68,.3);padding:4px 10px;border-radius:2px;background:transparent}
+.tb-logout:hover{background:rgba(255,23,68,.1)}
+.tb-settings{font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--cyan);cursor:pointer;border:1px solid rgba(0,245,255,.3);padding:4px 10px;border-radius:2px;background:transparent}
+.tb-settings:hover{background:rgba(0,245,255,.1)}
+
+.main{display:grid;grid-template-columns:200px 1fr;min-height:calc(100vh - 52px)}
+
+/* SIDEBAR NAV */
+.nav{background:rgba(2,5,12,.9);border-right:1px solid var(--border);padding:16px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 20px;cursor:pointer;transition:all .15s;font-size:.9rem;font-weight:600;color:var(--dim);border-left:2px solid transparent}
+.nav-item:hover{color:var(--text);background:rgba(0,245,255,.04)}
+.nav-item.active{color:var(--cyan);border-left-color:var(--cyan);background:rgba(0,245,255,.06)}
+.nav-icon{font-size:1rem;width:20px;text-align:center}
+
+/* CONTENT */
+.content{padding:24px;overflow-y:auto}
+.page{display:none}
+.page.active{display:block}
+.page-title{font-family:'Orbitron',monospace;font-size:1rem;font-weight:700;letter-spacing:.1em;color:var(--cyan);margin-bottom:20px;text-transform:uppercase}
+
+/* STAT CARDS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:28px}
+.stat-card{background:rgba(4,12,26,.9);border:1px solid var(--border);border-radius:6px;padding:18px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.stat-card.cyan::before{background:var(--cyan)}.stat-card.magenta::before{background:var(--magenta)}.stat-card.gold::before{background:var(--gold)}.stat-card.green::before{background:var(--green)}.stat-card.danger::before{background:var(--danger)}
+.stat-val{font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;margin-bottom:4px}
+.stat-card.cyan .stat-val{color:var(--cyan)}.stat-card.magenta .stat-val{color:var(--magenta)}.stat-card.gold .stat-val{color:var(--gold)}.stat-card.green .stat-val{color:var(--green)}.stat-card.danger .stat-val{color:var(--danger)}
+.stat-label{font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--dim);letter-spacing:.15em;text-transform:uppercase}
+
+/* TABLE */
+.data-table{width:100%;border-collapse:collapse;font-size:.88rem}
+.data-table th{font-family:'Share Tech Mono',monospace;font-size:.6rem;letter-spacing:.18em;color:var(--cyan);padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;text-transform:uppercase;white-space:nowrap}
+.data-table td{padding:10px 12px;border-bottom:1px solid rgba(0,245,255,.06);vertical-align:middle}
+.data-table tr:hover td{background:rgba(0,245,255,.03)}
+.table-wrap{background:rgba(4,12,26,.9);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:20px}
+
+/* BADGES */
+.badge{display:inline-block;font-family:'Share Tech Mono',monospace;font-size:.55rem;padding:2px 7px;border-radius:2px;letter-spacing:.1em;text-transform:uppercase}
+.badge-green{background:rgba(0,230,118,.1);color:var(--green);border:1px solid rgba(0,230,118,.3)}
+.badge-red{background:rgba(255,23,68,.1);color:var(--danger);border:1px solid rgba(255,23,68,.3)}
+.badge-gold{background:rgba(255,214,0,.1);color:var(--gold);border:1px solid rgba(255,214,0,.3)}
+.badge-cyan{background:rgba(0,245,255,.08);color:var(--cyan);border:1px solid rgba(0,245,255,.2)}
+.badge-dim{background:rgba(200,230,255,.05);color:var(--dim);border:1px solid rgba(200,230,255,.1)}
+
+/* BUTTONS */
+.btn{font-family:'Orbitron',monospace;font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;border:none;border-radius:2px;padding:6px 12px;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:5px}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:rgba(0,245,255,.1);color:var(--cyan);border:1px solid var(--cyan)}
+.btn-primary:hover{background:rgba(0,245,255,.2)}
+.btn-danger{background:rgba(255,23,68,.1);color:var(--danger);border:1px solid var(--danger)}
+.btn-danger:hover{background:rgba(255,23,68,.2)}
+.btn-gold{background:rgba(255,214,0,.1);color:var(--gold);border:1px solid var(--gold)}
+.btn-secondary{background:transparent;color:var(--dim);border:1px solid rgba(200,230,255,.15)}
+.btn-secondary:hover{color:var(--text);border-color:rgba(200,230,255,.3)}
+.btn-sm{padding:4px 9px;font-size:.55rem}
+
+/* INPUTS */
+.field{margin-bottom:14px}
+.field label{display:block;font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--cyan);letter-spacing:.18em;margin-bottom:5px;text-transform:uppercase}
+.field input{width:100%;background:rgba(0,245,255,.04);border:1px solid var(--border);border-radius:3px;padding:9px 12px;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:.85rem;outline:none}
+.field input:focus{border-color:var(--cyan)}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+.modal-bg.active{display:flex}
+.modal{background:rgba(4,12,26,.98);border:1px solid var(--cyan);border-radius:5px;padding:26px;width:90%;max-width:420px;position:relative}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),var(--magenta),transparent)}
+.modal-title{font-family:'Orbitron',monospace;font-size:.75rem;letter-spacing:.18em;color:var(--cyan);margin-bottom:18px;text-transform:uppercase}
+.modal-actions{display:flex;gap:8px;margin-top:16px}
+
+/* ONLINE LIST */
+.online-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid rgba(0,245,255,.06)}
+.online-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.online-nick{font-weight:600;font-size:.95rem}
+.online-since{font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim);margin-left:auto}
+
+/* SEARCH */
+.search-row{display:flex;gap:8px;margin-bottom:14px}
+.search-input{background:rgba(0,245,255,.04);border:1px solid var(--border);border-radius:3px;padding:8px 12px;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:.8rem;outline:none;flex:1}
+.search-input:focus{border-color:var(--cyan)}
+
+/* TOAST */
+.toast-container{position:fixed;top:16px;right:16px;z-index:9000;display:flex;flex-direction:column;gap:7px}
+.toast{background:rgba(4,12,26,.97);border-left:3px solid var(--cyan);padding:9px 14px;font-family:'Share Tech Mono',monospace;font-size:.68rem;color:var(--text);border-radius:2px;animation:slideIn .25s ease;max-width:280px}
+.toast.error{border-color:var(--danger);color:var(--danger)}
+.toast.success{border-color:var(--green);color:var(--green)}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* SIMULATION PAGE */
+.sim-config{background:rgba(4,12,26,.9);border:1px solid var(--border);border-radius:6px;padding:20px;margin-bottom:20px}
+.sim-config-title{font-family:'Share Tech Mono',monospace;font-size:.62rem;letter-spacing:.22em;color:var(--dim);text-transform:uppercase;margin-bottom:14px}
+.sim-btn-group{display:flex;gap:6px;flex-wrap:wrap}
+#simLive{display:flex;flex-direction:row;gap:12px;align-items:flex-start}
+.sim-player-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-bottom:16px}
+.sim-player-card{background:rgba(4,12,26,.9);border:1px solid var(--border);border-radius:5px;padding:12px;position:relative;transition:border-color .3s}
+.sim-player-card.active-turn{border-color:var(--cyan);box-shadow:0 0 14px rgba(0,245,255,.12)}
+.sim-player-card.eliminated{opacity:.4;filter:grayscale(.8)}
+.sim-player-nick{font-family:'Orbitron',monospace;font-size:.75rem;font-weight:700;color:var(--cyan);margin-bottom:8px}
+.sim-player-nick.elim{color:var(--danger)}
+.sim-player-row{display:flex;gap:10px;align-items:center;margin-bottom:5px;font-family:'Share Tech Mono',monospace;font-size:.7rem}
+.sim-lives{display:flex;gap:4px}
+.sim-life{width:28px;height:38px;border-radius:3px;border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.85rem;background:rgba(0,245,255,.04)}
+.sim-life.dead{background:rgba(255,23,68,.08);border-color:rgba(255,23,68,.3)}
+.sim-hand{display:flex;gap:3px}
+.sim-hcard{width:26px;height:36px;border-radius:3px;border:1px solid rgba(0,245,255,.2);background:rgba(0,245,255,.04);display:flex;align-items:center;justify-content:center;font-size:.75rem}
+.sim-core-bar{background:rgba(4,12,26,.9);border:1px solid var(--border);border-radius:5px;padding:12px;margin-bottom:14px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.sim-log-box{background:rgba(2,5,10,.95);border:1px solid var(--border);border-radius:5px;padding:10px;height:220px;overflow-y:auto;font-family:'Share Tech Mono',monospace;font-size:.64rem;line-height:1.9;color:var(--dim)}
+.sim-log-box::-webkit-scrollbar{width:3px}
+.sim-log-box::-webkit-scrollbar-thumb{background:var(--border)}
+.sim-status-bar{display:flex;gap:14px;align-items:center;flex-wrap:wrap;background:rgba(4,12,26,.9);border:1px solid var(--border);border-radius:5px;padding:10px 14px;margin-bottom:14px}
+.sim-stat{font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--dim)}
+.sim-stat span{color:var(--cyan)}
+.sim-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sim-dot.running{background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 1.2s infinite}
+.sim-dot.ended{background:var(--gold);box-shadow:0 0 6px var(--gold)}
+/* GLOBAL SETTINGS BUTTON */
+.global-settings-btn{position:fixed;top:10px;right:14px;z-index:9400;background:rgba(2,6,14,.92);border:1px solid rgba(0,245,255,.25);border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all .2s;backdrop-filter:blur(8px);color:var(--cyan);line-height:1}
+.global-settings-btn:hover{border-color:var(--cyan);background:rgba(0,245,255,.1)}
+/* SETTINGS PANEL */
+.settings-panel-admin{position:fixed;top:52px;right:0;width:260px;background:rgba(2,6,14,.97);border-left:1px solid var(--border);border-bottom:1px solid var(--border);padding:16px;z-index:9300;transform:translateX(100%);transition:transform .25s ease;border-radius:0 0 0 6px;max-height:calc(100vh - 60px);overflow-y:auto}
+.settings-panel-admin.open{transform:translateX(0)}
+.sp-title{font-family:'Share Tech Mono',monospace;font-size:.62rem;letter-spacing:.25em;color:var(--cyan);margin-bottom:14px;text-transform:uppercase}
+.sp-row{margin-bottom:14px}
+.sp-label{font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--dim);margin-bottom:6px;display:flex;justify-content:space-between}
+.sp-label span{color:var(--cyan)}
+.theme-btn-a{display:flex;align-items:center;gap:6px;padding:5px 9px;border-radius:4px;border:1px solid rgba(200,230,255,.12);background:transparent;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim);transition:all .15s;width:100%;margin-bottom:4px}
+.theme-btn-a:hover,.theme-btn-a.active{border-color:var(--cyan);color:var(--cyan);background:rgba(0,245,255,.06)}
+.theme-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+input[type=range]{width:100%;accent-color:var(--cyan);cursor:pointer}
+</style>
+</head>
+<body>
+<div class="toast-container" id="toasts"></div>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-box">
+    <div class="logo">SYS//BREACH</div>
+    <div class="logo-sub">// painel administrativo //</div>
+    <div class="field"><label>Nick Admin</label><input id="loginNick" type="text" placeholder="admin" autocomplete="off"></div>
+    <div class="field"><label>Senha</label><input id="loginPass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn btn-primary" style="width:100%;padding:11px" onclick="doLogin()">▶ ACESSAR PAINEL</button>
+    <div id="loginErr" style="font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--danger);margin-top:10px;text-align:center"></div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="admin-wrap" id="adminWrap">
+  <div class="topbar">
+    <div class="tb-logo">SYS//BREACH</div>
+    <div class="tb-badge">ADMIN PANEL</div>
+    <div class="tb-online" id="tbOnline">● 0 online</div>
+    <div class="tb-right">
+      <button class="tb-settings" onclick="toggleAdminSettings()">⚙ CONFIGURAR</button>
+      <div class="tb-logout" onclick="logout()">⏻ SAIR</div>
+    </div>
+  </div>
+  <div class="main">
+    <!-- NAV -->
+    <div class="nav">
+      <div class="nav-item active" onclick="goPage('dashboard')" id="nav-dashboard"><span class="nav-icon">📊</span> Dashboard</div>
+      <div class="nav-item" onclick="goPage('players')" id="nav-players"><span class="nav-icon">👤</span> Jogadores</div>
+      <div class="nav-item" onclick="goPage('rooms')" id="nav-rooms"><span class="nav-icon">🎮</span> Salas</div>
+      <div class="nav-item" onclick="goPage('online')" id="nav-online"><span class="nav-icon">🟢</span> Online</div>
+      <div class="nav-item" onclick="goPage('history')" id="nav-history"><span class="nav-icon">📜</span> Histórico</div>
+      <div class="nav-item" onclick="goPage('design')" id="nav-design"><span class="nav-icon">🎨</span> Design</div>
+      <div class="nav-item" onclick="goPage('sim')" id="nav-sim"><span class="nav-icon">🤖</span> Simulação</div>
+    </div>
+
+    <!-- PAGES -->
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-title">Dashboard</div>
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card cyan"><div class="stat-val" id="s-players">—</div><div class="stat-label">Jogadores</div></div>
+          <div class="stat-card green"><div class="stat-val" id="s-online">—</div><div class="stat-label">Online agora</div></div>
+          <div class="stat-card gold"><div class="stat-val" id="s-today">—</div><div class="stat-label">Partidas hoje</div></div>
+          <div class="stat-card magenta"><div class="stat-val" id="s-week">—</div><div class="stat-label">Partidas (7 dias)</div></div>
+          <div class="stat-card danger"><div class="stat-val" id="s-total">—</div><div class="stat-label">Total de partidas</div></div>
+          <div class="stat-card cyan"><div class="stat-val" id="s-rooms">—</div><div class="stat-label">Salas ativas</div></div>
+        </div>
+        <div class="page-title" style="font-size:.75rem">Últimas Partidas</div>
+        <div class="table-wrap"><table class="data-table" id="historyMini"></table></div>
+      </div>
+
+      <!-- PLAYERS -->
+      <div class="page" id="page-players">
+        <div class="page-title">Gerenciar Jogadores</div>
+        <div class="search-row">
+          <input class="search-input" id="playerSearch" placeholder="Buscar por nick..." oninput="filterPlayers()">
+          <button class="btn btn-primary" onclick="loadPlayers()">↺ Atualizar</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="playersTable">
+            <thead><tr><th>Nick</th><th>Status</th><th>Role</th><th>Vitórias</th><th>Partidas</th><th>Último acesso</th><th>Ações</th></tr></thead>
+            <tbody id="playersBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ROOMS -->
+      <div class="page" id="page-rooms">
+        <div class="page-title">Salas Ativas</div>
+        <button class="btn btn-primary" style="margin-bottom:14px" onclick="loadRooms()">↺ Atualizar</button>
+        <div class="table-wrap">
+          <table class="data-table" id="roomsTable">
+            <thead><tr><th>Código</th><th>Status</th><th>Jogadores</th><th>Criada em</th><th>Ações</th></tr></thead>
+            <tbody id="roomsBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ONLINE -->
+      <div class="page" id="page-online">
+        <div class="page-title">Jogadores Online</div>
+        <button class="btn btn-primary" style="margin-bottom:14px" onclick="loadOnline()">↺ Atualizar</button>
+        <div class="table-wrap" id="onlineList"></div>
+      </div>
+
+      <!-- HISTORY -->
+      <div class="page" id="page-history">
+        <div class="page-title">Histórico de Partidas</div>
+        <button class="btn btn-primary" style="margin-bottom:14px" onclick="loadHistory()">↺ Atualizar</button>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr><th>#</th><th>Vencedor</th><th>Jogadores</th><th>Data</th></tr></thead>
+            <tbody id="historyBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- DESIGN -->
+      <div class="page" id="page-design">
+        <div class="page-title">🎨 Design de Cartas</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--dim);margin-bottom:20px;line-height:1.7">
+          Faça upload de imagens PNG para substituir o visual padrão de cada carta.<br>
+          Tamanho recomendado: <strong style="color:var(--cyan)">17,5 × 12,5 cm</strong> (proporção 7:5 horizontal). Máximo 4 MB por arquivo.
+        </div>
+        <div id="cardDesignGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px"></div>
+      </div>
+
+      <!-- SIMULATION -->
+      <div class="page" id="page-sim">
+        <div class="page-title">🤖 Simulação de Partida</div>
+
+        <!-- Config row -->
+        <div class="sim-config" id="simConfigCard">
+          <div class="sim-config-title">// configuração //</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:18px">
+            <div>
+              <div style="font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--cyan);letter-spacing:.18em;margin-bottom:8px;text-transform:uppercase">Nº de Bots</div>
+              <div class="sim-btn-group" id="botCountBtns">
+                <button class="btn btn-secondary btn-sm" onclick="setBotCount(2)">2</button>
+                <button class="btn btn-secondary btn-sm" onclick="setBotCount(3)">3</button>
+                <button class="btn btn-primary btn-sm" onclick="setBotCount(4)">4</button>
+                <button class="btn btn-secondary btn-sm" onclick="setBotCount(5)">5</button>
+                <button class="btn btn-secondary btn-sm" onclick="setBotCount(6)">6</button>
+              </div>
+            </div>
+            <div>
+              <div style="font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--cyan);letter-spacing:.18em;margin-bottom:8px;text-transform:uppercase">Velocidade</div>
+              <div class="sim-btn-group" id="speedBtns">
+                <button class="btn btn-secondary btn-sm" onclick="setSimSpeed('slow')">🐢 Lento (2s)</button>
+                <button class="btn btn-primary btn-sm" onclick="setSimSpeed('normal')">⚡ Normal (0.8s)</button>
+                <button class="btn btn-secondary btn-sm" onclick="setSimSpeed('fast')">🚀 Rápido (0.2s)</button>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-primary" style="padding:10px 28px" onclick="startSim()">▶ INICIAR SIMULAÇÃO</button>
+            <button class="btn btn-secondary btn-sm" id="openTableBtn" style="display:none" onclick="openSimTable()">↗ ABRIR MESA EM NOVA ABA</button>
+            <button class="btn btn-danger btn-sm" id="stopSimBtn" style="display:none" onclick="stopSim()">⏹ PARAR</button>
+          </div>
+        </div>
+
+        <!-- Split view: iframe (game table) + log sidebar -->
+        <div id="simLive" style="display:none;gap:12px;margin-top:12px">
+
+          <!-- Game table iframe -->
+          <div style="flex:1;min-width:0;background:rgba(2,5,10,.9);border:1px solid var(--border);border-radius:6px;overflow:hidden;position:relative">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:rgba(0,0,0,.4);border-bottom:1px solid var(--border)">
+              <span style="font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--cyan);letter-spacing:.18em">// MESA AO VIVO //</span>
+              <div style="display:flex;gap:8px;align-items:center">
+                <div class="sim-dot running" id="simDot"></div>
+                <span class="sim-stat" id="simStatus">Iniciando…</span>
+              </div>
+            </div>
+            <iframe id="simTableFrame"
+              style="width:100%;height:calc(100vh - 340px);min-height:520px;border:none;display:block"
+              title="Mesa de Simulação"></iframe>
+          </div>
+
+          <!-- Sidebar: stats + log -->
+          <div style="width:310px;flex-shrink:0;display:flex;flex-direction:column;gap:8px">
+
+            <!-- Core + deck -->
+            <div class="sim-core-bar" style="flex-direction:column;align-items:flex-start;gap:5px">
+              <div style="display:flex;gap:10px;flex-wrap:wrap;width:100%">
+                <div class="sim-stat">TURNO <span id="simTurn" style="color:var(--cyan)">—</span></div>
+                <div class="sim-stat">DECK <span id="simDeck" style="color:var(--cyan)">—</span></div>
+                <div class="sim-stat">⏱ <span id="simElapsed" style="color:var(--dim)">0:00</span></div>
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <div class="sim-stat">NÚCLEO ₵<span id="simCoreCrypto" style="color:var(--magenta)">0</span></div>
+                <div class="sim-stat">CARGAS <span id="simCoreCharges" style="color:var(--magenta)">●●●</span></div>
+                <div id="simDdosTag" style="display:none;font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--magenta);border:1px solid var(--magenta);padding:1px 6px;border-radius:2px">☢ DDoS</div>
+              </div>
+              <div style="font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim)">ELIM: <span id="simElimCards">—</span></div>
+              <div id="simWinnerBadge" style="display:none"><span class="badge badge-gold" id="simWinnerNick"></span></div>
+            </div>
+
+            <!-- Players mini list -->
+            <div id="simPlayersGrid" style="display:flex;flex-direction:column;gap:4px"></div>
+
+            <!-- Log -->
+            <div style="font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--dim);letter-spacing:.18em;text-transform:uppercase;margin-bottom:3px">// log //</div>
+            <div class="sim-log-box" id="simLogBox" style="height:180px"></div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: RESET PASSWORD -->
+<div class="modal-bg" id="modalResetPw">
+  <div class="modal">
+    <div class="modal-title">// resetar senha //</div>
+    <div id="resetPwNick" style="font-family:'Share Tech Mono',monospace;font-size:.75rem;color:var(--cyan);margin-bottom:14px"></div>
+    <div class="field"><label>Nova Senha</label><input id="resetPwInput" type="text" placeholder="nova senha (mín. 4 chars)"></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="confirmResetPw()">✓ Confirmar</button>
+      <button class="btn btn-secondary" onclick="closeModal('modalResetPw')">← Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CONFIRM DELETE -->
+<div class="modal-bg" id="modalDelete">
+  <div class="modal">
+    <div class="modal-title">// excluir jogador //</div>
+    <div id="deleteNick" style="font-family:'Share Tech Mono',monospace;font-size:.8rem;color:var(--danger);margin-bottom:14px"></div>
+    <p style="font-family:'Share Tech Mono',monospace;font-size:.7rem;color:var(--dim);margin-bottom:16px">Esta ação é irreversível. O jogador será removido do sistema.</p>
+    <div class="modal-actions">
+      <button class="btn btn-danger" onclick="confirmDelete()">🗑 Excluir</button>
+      <button class="btn btn-secondary" onclick="closeModal('modalDelete')">← Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CONFIRM CLOSE ROOM -->
+<div class="modal-bg" id="modalCloseRoom">
+  <div class="modal">
+    <div class="modal-title">// encerrar sala //</div>
+    <div id="closeRoomCode" style="font-family:'Share Tech Mono',monospace;font-size:.8rem;color:var(--gold);margin-bottom:14px"></div>
+    <p style="font-family:'Share Tech Mono',monospace;font-size:.7rem;color:var(--dim);margin-bottom:16px">Todos os jogadores serão expulsos da sala.</p>
+    <div class="modal-actions">
+      <button class="btn btn-danger" onclick="confirmCloseRoom()">⏹ Encerrar</button>
+      <button class="btn btn-secondary" onclick="closeModal('modalCloseRoom')">← Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let adminToken = localStorage.getItem('adminToken') || null;
+let allPlayers = [];
+let pendingResetId = null, pendingDeleteId = null, pendingRoomId = null;
+
+// ── AUTH ────────────────────────────────────────────────────────
+async function doLogin() {
+  const nick = document.getElementById('loginNick').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  document.getElementById('loginErr').textContent = '';
+  try {
+    const res = await api('/api/login', 'POST', { nick, password: pass }, false);
+    if (res.error) { document.getElementById('loginErr').textContent = res.error; return; }
+    if (res.player.role !== 'admin') { document.getElementById('loginErr').textContent = 'Acesso negado — conta sem permissão de admin.'; return; }
+    adminToken = res.token;
+    localStorage.setItem('adminToken', adminToken);
+    enterPanel();
+  } catch(e) { document.getElementById('loginErr').textContent = 'Erro de conexão'; }
+}
+
+function logout() {
+  adminToken = null; localStorage.removeItem('adminToken');
+  document.getElementById('adminWrap').classList.remove('active');
+  document.getElementById('loginWrap').style.display = 'flex';
+}
+
+function enterPanel() {
+  document.getElementById('loginWrap').style.display = 'none';
+  document.getElementById('adminWrap').classList.add('active');
+  loadDashboard();
+  setInterval(refreshOnlineCount, 10000);
+}
+
+// ── API ────────────────────────────────────────────────────────
+async function api(url, method='GET', body=null, auth=true) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (auth && adminToken) headers['Authorization'] = 'Bearer ' + adminToken;
+  const res = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : undefined });
+  return res.json();
+}
+
+// ── PAGES ─────────────────────────────────────────────────────
+function goPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+  if (name === 'dashboard') loadDashboard();
+  if (name === 'players') loadPlayers();
+  if (name === 'rooms') loadRooms();
+  if (name === 'online') loadOnline();
+  if (name === 'history') loadHistory();
+  if (name === 'sim') {
+    document.getElementById('speedBtns').querySelectorAll('.btn').forEach((b, i) => {
+      b.dataset.speed = ['slow','normal','fast'][i];
+    });
+    if (simId) pollSim();
+  }
+  if (name === 'design') loadCardDesign();
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────
+async function loadDashboard() {
+  const [stats, hist] = await Promise.all([
+    api('/api/admin/stats'),
+    api('/api/admin/history'),
+  ]);
+  document.getElementById('s-players').textContent = stats.totalPlayers ?? '—';
+  document.getElementById('s-online').textContent = stats.onlineNow ?? '—';
+  document.getElementById('s-today').textContent = stats.todayGames ?? '—';
+  document.getElementById('s-week').textContent = stats.weekGames ?? '—';
+  document.getElementById('s-total').textContent = stats.totalGames ?? '—';
+  document.getElementById('s-rooms').textContent = stats.activeRooms ?? '—';
+  document.getElementById('tbOnline').textContent = '● ' + (stats.onlineNow || 0) + ' online';
+
+  const tbody = document.getElementById('historyMini');
+  if (!hist.length) { tbody.innerHTML = '<tr><td colspan="4" class="empty">Nenhuma partida ainda.</td></tr>'; return; }
+  tbody.innerHTML = '<thead><tr><th>#</th><th>Vencedor</th><th>Jogadores</th><th>Data</th></tr></thead><tbody>' +
+    hist.slice(0,5).map((h,i) => `<tr>
+      <td>${h.id}</td>
+      <td><span class="badge badge-gold">${esc(h.winner_nick||'—')}</span></td>
+      <td>${h.player_count}</td>
+      <td style="font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--dim)">${fmtDate(h.played_at)}</td>
+    </tr>`).join('') + '</tbody>';
+}
+
+async function refreshOnlineCount() {
+  try {
+    const stats = await api('/api/admin/stats');
+    document.getElementById('s-online').textContent = stats.onlineNow ?? '—';
+    document.getElementById('tbOnline').textContent = '● ' + (stats.onlineNow || 0) + ' online';
+  } catch {}
+}
+
+// ── PLAYERS ───────────────────────────────────────────────────
+async function loadPlayers() {
+  allPlayers = await api('/api/admin/players');
+  renderPlayers(allPlayers);
+}
+
+function filterPlayers() {
+  const q = document.getElementById('playerSearch').value.toLowerCase();
+  renderPlayers(allPlayers.filter(p => p.nick.toLowerCase().includes(q)));
+}
+
+function renderPlayers(players) {
+  const tbody = document.getElementById('playersBody');
+  if (!players.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">Nenhum jogador encontrado.</td></tr>'; return; }
+  tbody.innerHTML = players.map(p => `<tr>
+    <td style="font-weight:600">${esc(p.nick)} ${p.online ? '<span class="badge badge-green">online</span>' : ''}</td>
+    <td>${p.banned ? '<span class="badge badge-red">banido</span>' : '<span class="badge badge-cyan">ativo</span>'}</td>
+    <td>${p.role === 'admin' ? '<span class="badge badge-gold">admin</span>' : '<span class="badge badge-dim">player</span>'}</td>
+    <td>${p.games_won}</td>
+    <td>${p.games_played}</td>
+    <td style="font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--dim)">${fmtDate(p.last_seen)}</td>
+    <td>
+      <div style="display:flex;gap:5px;flex-wrap:wrap">
+        ${p.role !== 'admin' ? `
+          <button class="btn btn-gold btn-sm" onclick="openResetPw('${p.id}','${esc(p.nick)}')">🔑 Senha</button>
+          ${p.banned
+            ? `<button class="btn btn-primary btn-sm" onclick="toggleBan('${p.id}',false)">✓ Desbanir</button>`
+            : `<button class="btn btn-secondary btn-sm" onclick="toggleBan('${p.id}',true)">🚫 Banir</button>`}
+          <button class="btn btn-danger btn-sm" onclick="openDelete('${p.id}','${esc(p.nick)}')">🗑</button>
+        ` : '<span style="font-family:\'Share Tech Mono\',monospace;font-size:.55rem;color:var(--dim)">—</span>'}
+      </div>
+    </td>
+  </tr>`).join('');
+}
+
+function openResetPw(id, nick) {
+  pendingResetId = id;
+  document.getElementById('resetPwNick').textContent = 'Jogador: ' + nick;
+  document.getElementById('resetPwInput').value = '';
+  openModal('modalResetPw');
+}
+
+async function confirmResetPw() {
+  const pw = document.getElementById('resetPwInput').value.trim();
+  if (!pw) { toast('Digite a nova senha', 'error'); return; }
+  const res = await api('/api/admin/players/' + pendingResetId + '/reset-password', 'POST', { newPassword: pw });
+  if (res.error) { toast(res.error, 'error'); return; }
+  toast('Senha redefinida com sucesso!', 'success');
+  closeModal('modalResetPw');
+}
+
+async function toggleBan(id, banned) {
+  const res = await api('/api/admin/players/' + id + '/ban', 'POST', { banned });
+  if (res.error) { toast(res.error, 'error'); return; }
+  toast(banned ? 'Jogador banido.' : 'Jogador desbanido.', 'success');
+  loadPlayers();
+}
+
+function openDelete(id, nick) {
+  pendingDeleteId = id;
+  document.getElementById('deleteNick').textContent = 'Excluir: ' + nick;
+  openModal('modalDelete');
+}
+
+async function confirmDelete() {
+  const res = await api('/api/admin/players/' + pendingDeleteId, 'DELETE');
+  if (res.error) { toast(res.error, 'error'); return; }
+  toast('Jogador excluído.', 'success');
+  closeModal('modalDelete');
+  loadPlayers();
+}
+
+// ── ROOMS ─────────────────────────────────────────────────────
+async function loadRooms() {
+  const rooms = await api('/api/admin/rooms');
+  const tbody = document.getElementById('roomsBody');
+  if (!rooms.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty">Nenhuma sala ativa.</td></tr>'; return; }
+  tbody.innerHTML = rooms.map(r => `<tr>
+    <td><span style="font-family:'Orbitron',monospace;font-size:.9rem;color:var(--cyan);letter-spacing:.2em">${r.code}</span></td>
+    <td>${r.status === 'playing' ? '<span class="badge badge-green">jogando</span>' : r.status === 'waiting' ? '<span class="badge badge-cyan">aguardando</span>' : '<span class="badge badge-dim">encerrada</span>'}</td>
+    <td>${r.players.map(p => esc(p.nick)).join(', ')} <span style="color:var(--dim);font-size:.75rem">(${r.players.length}/${r.max_players})</span></td>
+    <td style="font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--dim)">${fmtDate(r.created_at)}</td>
+    <td>
+      ${r.status !== 'finished' ? `<button class="btn btn-danger btn-sm" onclick="openCloseRoom('${r.id}','${r.code}')">⏹ Encerrar</button>` : '—'}
+    </td>
+  </tr>`).join('');
+}
+
+function openCloseRoom(id, code) {
+  pendingRoomId = id;
+  document.getElementById('closeRoomCode').textContent = 'Sala: ' + code;
+  openModal('modalCloseRoom');
+}
+
+async function confirmCloseRoom() {
+  const res = await api('/api/admin/rooms/' + pendingRoomId + '/close', 'POST');
+  if (res.error) { toast(res.error, 'error'); return; }
+  toast('Sala encerrada.', 'success');
+  closeModal('modalCloseRoom');
+  loadRooms();
+}
+
+// ── ONLINE ────────────────────────────────────────────────────
+async function loadOnline() {
+  const list = await api('/api/admin/online');
+  const el = document.getElementById('onlineList');
+  if (!list.length) { el.innerHTML = '<div class="empty">Nenhum jogador online no momento.</div>'; return; }
+  el.innerHTML = list.map(p => `
+    <div class="online-item">
+      <div class="online-dot"></div>
+      <div class="online-nick">${esc(p.nick)}</div>
+      <div class="online-since">desde ${fmtDate(p.since)}</div>
+    </div>`).join('');
+}
+
+// ── HISTORY ──────────────────────────────────────────────────
+async function loadHistory() {
+  const hist = await api('/api/admin/history');
+  const tbody = document.getElementById('historyBody');
+  if (!hist.length) { tbody.innerHTML = '<tr><td colspan="4" class="empty">Nenhuma partida ainda.</td></tr>'; return; }
+  tbody.innerHTML = hist.map(h => `<tr>
+    <td style="font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--dim)">${h.id}</td>
+    <td><span class="badge badge-gold">${esc(h.winner_nick || '—')}</span></td>
+    <td>${h.player_count}</td>
+    <td style="font-family:'Share Tech Mono',monospace;font-size:.65rem;color:var(--dim)">${fmtDate(h.played_at)}</td>
+  </tr>`).join('');
+}
+
+// ── MODAL ────────────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+document.addEventListener('click', e => { if (e.target.classList.contains('modal-bg')) e.target.classList.remove('active'); });
+
+// ── TOAST ────────────────────────────────────────────────────
+function toast(msg, type='') {
+  const c = document.getElementById('toasts');
+  const el = document.createElement('div'); el.className = 'toast ' + type; el.textContent = msg;
+  c.appendChild(el); setTimeout(() => el.remove(), 3000);
+}
+
+// ── UTILS ────────────────────────────────────────────────────
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtDate(d) {
+  if (!d) return '—';
+  try { return new Date(d).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }); }
+  catch { return d; }
+}
+
+
+// ── SIMULATION ───────────────────────────────────────────────────────────────
+const IC_SIM = { Admin:'🟡', Trojan:'🔴', Firewall:'🟢', Phisher:'🟠', Sniffer:'🔵' };
+let simBotCount = 4, simSpeed = 'normal', simId = null;
+let simWs = null; // WebSocket for live state from server
+const SIM_POLL_MS = 800;
+let simPollInterval = null; // fallback poll
+
+function setBotCount(n) {
+  simBotCount = n;
+  document.querySelectorAll('#botCountBtns .btn').forEach(b => {
+    b.className = parseInt(b.textContent) === n ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
+  });
+}
+
+function setSimSpeed(s) {
+  simSpeed = s;
+  document.querySelectorAll('#speedBtns .btn').forEach((b, i) => {
+    b.dataset.speed = ['slow','normal','fast'][i];
+    b.className = b.dataset.speed === s ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
+  });
+}
+
+async function startSim() {
+  try {
+    const res = await api('/api/admin/simulate/start', 'POST', { botCount: simBotCount, speed: simSpeed });
+    if (res.error) { toast(res.error, 'error'); return; }
+    simId = res.simId;
+
+    // Show live section
+    const liveEl = document.getElementById('simLive');
+    liveEl.style.display = 'flex';
+    document.getElementById('openTableBtn').style.display = 'inline-flex';
+    document.getElementById('stopSimBtn').style.display = 'inline-flex';
+
+    toast('Simulação iniciada: ' + res.bots.join(', '), 'success');
+
+    // Load the game table iframe in spectator/sim mode
+    loadSimIframe(simId);
+
+    // Connect via WebSocket for live stats sidebar
+    connectSimWs(simId);
+  } catch(e) { toast('Erro ao iniciar simulação', 'error'); }
+}
+
+function loadSimIframe(sid) {
+  const frame = document.getElementById('simTableFrame');
+  // Load the game client with ?sim=<id> so it enters sim-spectator mode
+  frame.src = '/?sim=' + encodeURIComponent(sid);
+}
+
+function openSimTable() {
+  if (!simId) return;
+  window.open('/?sim=' + encodeURIComponent(simId), '_blank');
+}
+
+function connectSimWs(sid) {
+  disconnectSimWs();
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  simWs = new WebSocket(proto + '//' + location.host);
+  simWs.onopen = () => {
+    simWs.send(JSON.stringify({ type: 'spectate_sim', payload: { simId: sid } }));
+  };
+  simWs.onmessage = (e) => {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'sim_state') renderSimState(msg);
+    } catch {}
+  };
+  simWs.onclose = () => {
+    // Fallback to polling if WS dies
+    if (simId) { startSimPoll(); }
+  };
+}
+
+function disconnectSimWs() {
+  if (simWs) { try { simWs.close(); } catch {} simWs = null; }
+}
+
+function startSimPoll() { stopSimPoll(); simPollInterval = setInterval(pollSim, SIM_POLL_MS); pollSim(); }
+function stopSimPoll() { if (simPollInterval) { clearInterval(simPollInterval); simPollInterval = null; } }
+
+async function pollSim() {
+  if (!simId) return;
+  try {
+    const s = await api('/api/admin/simulate/' + simId);
+    if (s.error) { stopSimPoll(); return; }
+    renderSimState(s);
+    if (!s.running) { stopSimPoll(); simPollInterval = setInterval(pollSim, 3000); }
+  } catch {}
+}
+
+async function stopSim() {
+  if (!simId) return;
+  try { await api('/api/admin/simulate/' + simId, 'DELETE'); } catch {}
+  toast('Simulação encerrada.', 'success');
+  disconnectSimWs();
+  stopSimPoll();
+  simId = null;
+  document.getElementById('simLive').style.display = 'none';
+  document.getElementById('openTableBtn').style.display = 'none';
+  document.getElementById('stopSimBtn').style.display = 'none';
+  // Clear iframe
+  document.getElementById('simTableFrame').src = 'about:blank';
+}
+
+function renderSimState(s) {
+  const dot = document.getElementById('simDot');
+  dot.className = 'sim-dot ' + (s.running ? 'running' : 'ended');
+
+  const statusEl = document.getElementById('simStatus');
+  if (statusEl) statusEl.textContent = s.running ? (s.currentPlayerNick + ' jogando…') : (s.winner ? '🏆 ' + s.winner + ' venceu' : 'Encerrado');
+
+  document.getElementById('simTurn').textContent    = s.turnNumber;
+  document.getElementById('simElapsed').textContent = fmtElapsed(s.elapsed || 0);
+  document.getElementById('simDeck').textContent    = (s.deckSize || 0) + '/15';
+
+  const wb = document.getElementById('simWinnerBadge');
+  if (s.winner) {
+    wb.style.display = 'block';
+    document.getElementById('simWinnerNick').textContent = '🏆 ' + s.winner + ' VENCEU';
+  } else { wb.style.display = 'none'; }
+
+  // Core
+  if (s.core) {
+    document.getElementById('simCoreCrypto').textContent = s.core.crypto;
+    const maxCh = s.core.maxCharges || 3;
+    document.getElementById('simCoreCharges').textContent =
+      Array.from({length: maxCh}, (_, i) => i < s.core.charges ? '●' : '○').join('');
+    document.getElementById('simDdosTag').style.display = s.ddosAvailable ? 'inline-block' : 'none';
+  }
+  const elimLine = (s.eliminatedCards || []).map(c => IC_SIM[c] || '?').join(' ');
+  document.getElementById('simElimCards').textContent = elimLine || '—';
+
+  // Players mini list (sidebar)
+  const grid = document.getElementById('simPlayersGrid');
+  grid.innerHTML = s.players.map(p => {
+    const isTurn = p.id === s.currentPlayerId && s.phase !== 'ended' && !p.eliminated;
+    const livesHtml = (p.livesRevealed || []).map((rev, i) =>
+      `<span style="font-size:.72rem">${rev ? (IC_SIM[p.lives && p.lives[i]] || '☠') : '🔒'}</span>`).join('');
+    const handHtml = (p.hand || []).map(c =>
+      `<span title="${esc(c)}" style="font-size:.7rem">${IC_SIM[c] || '?'}</span>`).join(' ');
+    return `<div style="display:flex;align-items:center;gap:6px;padding:4px 6px;background:rgba(4,12,26,.8);border:1px solid ${isTurn?'var(--cyan)':p.eliminated?'rgba(255,23,68,.2)':'var(--border)'};border-radius:3px;${p.eliminated?'opacity:.45':''}">
+      <div style="font-family:'Orbitron',monospace;font-size:.6rem;color:${isTurn?'var(--cyan)':p.eliminated?'var(--danger)':'var(--text)'};min-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${isTurn?'▶ ':p.eliminated?'☠ ':''}${esc(p.nick)}</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:.62rem;color:var(--gold);min-width:28px">₵${p.crypto}</div>
+      <div style="display:flex;gap:2px">${livesHtml}</div>
+      <div style="display:flex;gap:2px;margin-left:auto">${handHtml}</div>
+    </div>`;
+  }).join('');
+
+  // Log
+  const logBox = document.getElementById('simLogBox');
+  const atBottom = logBox.scrollTop + logBox.clientHeight >= logBox.scrollHeight - 12;
+  logBox.innerHTML = (s.log || []).map(l => {
+    let col = '';
+    if (l.includes('🏆') || l.includes('ROOT')) col = 'color:var(--gold)';
+    else if (l.includes('☠') || l.includes('DDoS') || l.includes('❌')) col = 'color:var(--danger)';
+    else if (l.includes('⚡') || l.includes('✅') || l.includes('⛏')) col = 'color:var(--cyan)';
+    return `<div style="${col};border-bottom:1px solid rgba(0,245,255,.04);padding:1px 0">${esc(l)}</div>`;
+  }).join('');
+  if (atBottom) logBox.scrollTop = logBox.scrollHeight;
+}
+
+function fmtElapsed(s) {
+  const m = Math.floor(s / 60), sec = s % 60;
+  return m + ':' + String(sec).padStart(2,'0');
+}
+
+// ── CARD DESIGN ──────────────────────────────────────────────
+const CARD_TYPES_DESIGN = [
+  { type: 'Admin',    label: 'Admin',    icon: '🟡', color: 'var(--gold)' },
+  { type: 'Trojan',   label: 'Trojan',   icon: '🔴', color: 'var(--danger)' },
+  { type: 'Firewall', label: 'Firewall', icon: '🟢', color: 'var(--green)' },
+  { type: 'Phisher',  label: 'Phisher',  icon: '🟠', color: '#ff9100' },
+  { type: 'Sniffer',  label: 'Sniffer',  icon: '🔵', color: '#7878ff' },
+  { type: 'Back',     label: 'Verso da carta', icon: '🃏', color: 'var(--dim)' },
+];
+
+async function loadCardDesign() {
+  const images = await api('/api/card-images', 'GET', null, true);
+  const grid = document.getElementById('cardDesignGrid');
+  grid.innerHTML = CARD_TYPES_DESIGN.map(ct => {
+    const imgUrl = images[ct.type];
+    return `<div style="background:rgba(4,12,26,.9);border:1px solid var(--border);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:10px">
+      <div style="font-family:'Orbitron',monospace;font-size:.75rem;font-weight:700;color:${ct.color};letter-spacing:.1em">${ct.icon} ${ct.label}</div>
+      <div id="ci-preview-${ct.type}" style="aspect-ratio:7/5;background:rgba(0,0,0,.4);border:1px dashed rgba(0,245,255,.15);border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center">
+        ${imgUrl
+          ? `<img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover" alt="${ct.type}">`
+          : `<span style="font-size:2.5rem;opacity:.3">${ct.icon}</span>`}
+      </div>
+      <div style="display:flex;gap:6px">
+        <label class="btn btn-primary btn-sm" style="cursor:pointer;flex:1;justify-content:center">
+          ⬆ Upload PNG
+          <input type="file" accept="image/png" style="display:none" onchange="uploadCardImage('${ct.type}',this)">
+        </label>
+        ${imgUrl ? `<button class="btn btn-danger btn-sm" onclick="deleteCardImage('${ct.type}')">✕</button>` : ''}
+      </div>
+      <div id="ci-status-${ct.type}" style="font-family:'Share Tech Mono',monospace;font-size:.55rem;min-height:14px"></div>
+    </div>`;
+  }).join('');
+}
+
+async function uploadCardImage(type, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const statusEl = document.getElementById(`ci-status-${type}`);
+  statusEl.textContent = '⏳ Enviando…';
+  statusEl.style.color = 'var(--dim)';
+  const form = new FormData();
+  form.append('image', file);
+  try {
+    const res = await fetch(`/api/admin/card-images/${type}`, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + adminToken },
+      body: form,
+    });
+    const data = await res.json();
+    if (data.ok) {
+      statusEl.textContent = '✅ Imagem atualizada!';
+      statusEl.style.color = 'var(--green)';
+      // Refresh the preview
+      const prev = document.getElementById(`ci-preview-${type}`);
+      prev.innerHTML = `<img src="${data.url}" style="width:100%;height:100%;object-fit:cover" alt="${type}">`;
+      setTimeout(() => loadCardDesign(), 800);
+    } else {
+      statusEl.textContent = '❌ ' + (data.error || 'Erro');
+      statusEl.style.color = 'var(--danger)';
+    }
+  } catch (e) {
+    statusEl.textContent = '❌ Erro de rede';
+    statusEl.style.color = 'var(--danger)';
+  }
+  input.value = '';
+}
+
+async function deleteCardImage(type) {
+  if (!confirm(`Remover imagem de ${type} e voltar ao padrão?`)) return;
+  const statusEl = document.getElementById(`ci-status-${type}`);
+  statusEl.textContent = '⏳ Removendo…';
+  const data = await api(`/api/admin/card-images/${type}`, 'DELETE');
+  if (data.ok) {
+    statusEl.textContent = '✅ Removida';
+    statusEl.style.color = 'var(--green)';
+    setTimeout(() => loadCardDesign(), 600);
+  } else {
+    statusEl.textContent = '❌ Erro';
+    statusEl.style.color = 'var(--danger)';
+  }
+}
+
+// ── INIT ────────────────────────────────────────────────────
+if (adminToken) {
+  // Verify token is still valid
+  api('/api/admin/stats').then(res => {
+    if (res.error) { adminToken = null; localStorage.removeItem('adminToken'); }
+    else enterPanel();
+  }).catch(() => { adminToken = null; localStorage.removeItem('adminToken'); });
+}
+
+// ── SETTINGS (zoom + themes) ──────────────────────────────────────────────────
+function toggleAdminSettings(){document.getElementById('adminSettingsPanel').classList.toggle('open')}
+function applyAdminTheme(id){
+  document.documentElement.dataset.theme=id==='default'?'':id;
+  localStorage.setItem('sb_theme',id);
+  document.querySelectorAll('.theme-btn-a').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('atheme-'+id);
+  if(btn)btn.classList.add('active');
+}
+function applyAdminZoom(val){
+  val=parseInt(val);
+  document.getElementById('adminZoomSlider').value=val;
+  document.getElementById('adminZoomVal').textContent=val+'%';
+  document.documentElement.style.zoom=(val/100);
+  localStorage.setItem('sb_zoom',val);
+}
+// Restore saved settings on load
+(function(){
+  const theme=localStorage.getItem('sb_theme')||'default';
+  const zoom=parseInt(localStorage.getItem('sb_zoom')||'100');
+  applyAdminTheme(theme);
+  applyAdminZoom(zoom);
+})();
+</script>
+
+<!-- GLOBAL SETTINGS PANEL -->
+<div class="settings-panel-admin" id="adminSettingsPanel">
+  <div class="sp-title">// configurações //</div>
+  <div class="sp-row">
+    <div class="sp-label">Zoom <span id="adminZoomVal">100%</span></div>
+    <input type="range" id="adminZoomSlider" min="60" max="200" value="100" step="5" oninput="applyAdminZoom(this.value)">
+  </div>
+  <div class="sp-row" style="display:flex;gap:4px;flex-wrap:wrap">
+    <button onclick="applyAdminZoom(100)" style="flex:1;padding:4px 6px;background:transparent;border:1px solid var(--border);color:var(--dim);cursor:pointer;border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:.6rem">100%</button>
+    <button onclick="applyAdminZoom(125)" style="flex:1;padding:4px 6px;background:transparent;border:1px solid var(--border);color:var(--dim);cursor:pointer;border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:.6rem">125%</button>
+    <button onclick="applyAdminZoom(150)" style="flex:1;padding:4px 6px;background:transparent;border:1px solid var(--border);color:var(--dim);cursor:pointer;border-radius:3px;font-family:'Share Tech Mono',monospace;font-size:.6rem">150%</button>
+  </div>
+  <div class="sp-row" style="margin-top:12px;border-top:1px solid rgba(0,245,255,.1);padding-top:12px">
+    <div class="sp-label" style="margin-bottom:8px">Tema visual</div>
+    <button class="theme-btn-a" id="atheme-default" onclick="applyAdminTheme('default')"><span class="theme-dot" style="background:#00f5ff"></span>System Breach</button>
+    <button class="theme-btn-a" id="atheme-dark-matter" onclick="applyAdminTheme('dark-matter')"><span class="theme-dot" style="background:#25ace8"></span>Dark Matter</button>
+    <button class="theme-btn-a" id="atheme-cyberpunk" onclick="applyAdminTheme('cyberpunk')"><span class="theme-dot" style="background:#f3e600"></span>Cyberpunk 2077</button>
+    <button class="theme-btn-a" id="atheme-soft" onclick="applyAdminTheme('soft')"><span class="theme-dot" style="background:#8b9cf4"></span>Soft</button>
+    <button class="theme-btn-a" id="atheme-crimson" onclick="applyAdminTheme('crimson')"><span class="theme-dot" style="background:#ff2244"></span>Crimson</button>
+  </div>
+</div>
+
+</body>
+</html>
