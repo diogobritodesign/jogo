@@ -41,7 +41,14 @@
 
 ### 3.1 Cartas
 
-O deck contém **15 cartas** (3 de cada tipo):
+O deck contém **5 tipos de carta** com cópias suficientes para o número de jogadores:
+
+- **2–3 jogadores:** 3 cópias × 5 tipos = **15 cartas**
+- **4 jogadores:** 4 cópias × 5 tipos = **20 cartas**
+- **5 jogadores:** 5 cópias × 5 tipos = **25 cartas**
+- **6 jogadores:** 6 cópias × 5 tipos = **30 cartas**
+
+Fórmula: `copiesPerCard = max(3, numPlayers)` — garante que o deck sempre comporte 4 cartas por jogador (2 mão + 2 vidas) com sobra para trocas em contestações.
 
 | Carta | Ação Associada | Bloqueio |
 |---|---|---|
@@ -282,7 +289,7 @@ Jogador Ativo                    Server                     Outros Jogadores
 | Parâmetro | Valor |
 |---|---|
 | Jogadores por sala | 2–6 |
-| Cartas no deck | 15 (3×5 tipos) |
+| Cartas no deck | `max(3, N) × 5` onde N = nº de jogadores |
 | Cartas de mão | 2 por jogador |
 | Vidas | 2 por jogador |
 | Crypto inicial | ₵2 |
@@ -328,6 +335,8 @@ Jogador Ativo                    Server                     Outros Jogadores
 | Contestação de Ajuda Externa bloqueada | `respondToAction()` | Retorna `{error}` |
 | DDoS não disponível/já usado | `respondToAction()`, `respondToBlock()` | Retorna `{error}` |
 | Null safety: ator/alvo não encontrado na resolução | `resolveAction()`, `startContest()` | Avança turno sem crash |
+| Jogo já finalizado durante resolução | `nextTurn()` | Early return — impede que `advanceTurn()` sobrescreva `phase='ended'` |
+| Deck vazio durante compra | `drawCard()` | Retorna `null` (safety fallback; o deck é dimensionado para nunca esvaziar) |
 | Fase incorreta | `resolveSnifferChoice()`, `respondToBlock()` | Retorna `{error}` |
 
 ### 6.2 Validações no `server.js`
@@ -361,7 +370,9 @@ Jogador Ativo                    Server                     Outros Jogadores
 
 ### 6.4 Proteção contra Travamentos
 
-- **Deck vazio:** `drawCard()` recria o deck se estiver vazio.
+- **Guarda de fim de jogo em `nextTurn()`:** Se `game.phase === 'ended'` (definido por `checkWin()` durante eliminação), `nextTurn()` retorna imediatamente sem chamar `advanceTurn()`. Isso impede que o estado `'ended'` seja sobrescrito por `'action'`, o que causava o travamento do jogo na última mão.
+- **Deck dimensionado por número de jogadores:** O deck é criado com `max(3, N)` cópias de cada tipo, onde N = número de jogadores. Isso garante cartas suficientes (4 por jogador + buffer) e elimina a necessidade de recriar o deck durante a partida.
+- **Deck vazio (fallback):** `drawCard()` retorna `null` se o deck estiver vazio (não recria um deck novo, o que causava cartas duplicadas e contagem errada).
 - **Sniffer com deck vazio:** Concede +₵1 ao invés de travar.
 - **Bot com ação inválida:** Fallback automático para `income`.
 - **Simulação travada:** Após 8 ticks sem progresso, força `income` e reinicia contagem.
@@ -377,14 +388,14 @@ Jogador Ativo                    Server                     Outros Jogadores
 
 | Função | Descrição |
 |---|---|
-| `createDeck()` | Cria deck de 15 cartas embaralhado (Fisher-Yates com rejeição de clustering) |
+| `createDeck(copiesPerCard)` | Cria deck embaralhado com `copiesPerCard` cópias de cada tipo (Fisher-Yates com rejeição de clustering) |
 | `createPlayer(id, nick)` | Cria objeto jogador com estado inicial |
 | `dealInitialCards(game)` | Distribui 2 cartas de mão + 2 vidas para cada jogador |
-| `drawCard(game)` | Compra 1 carta do topo do deck (recria se vazio) |
-| `createGame(roomId, players)` | Inicializa estado completo do jogo |
+| `drawCard(game)` | Compra 1 carta do topo do deck (retorna `null` se vazio — safety fallback) |
+| `createGame(roomId, players)` | Inicializa estado completo do jogo, dimensiona deck para nº de jogadores |
 | `advanceTurn(game)` | Reseta fases, verifica DDoS, loga turno |
 | `currentPlayer(game)` | Retorna jogador do turno atual |
-| `nextTurn(game)` | Avança para o próximo jogador não-eliminado |
+| `nextTurn(game)` | Avança para o próximo jogador não-eliminado; **retorna imediatamente se `phase='ended'`** |
 | `checkWin(game)` | Verifica se restou apenas 1 jogador vivo |
 | `getActivePlayers(game)` | Retorna array de jogadores não-eliminados |
 | `performAction(game, playerId, action)` | Valida e executa ação do jogador |

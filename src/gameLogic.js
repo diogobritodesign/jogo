@@ -1,7 +1,7 @@
 'use strict';
 
 const CARDS = ['Admin', 'Trojan', 'Firewall', 'Phisher', 'Sniffer'];
-const DECK_SIZE = 15; // 3 of each
+const BASE_COPIES_PER_CARD = 3; // minimum copies of each card type
 
 // Maximum number of adjacent same-type pairs tolerated before reshuffling.
 // With 15 cards (3×5 types), a pure Fisher-Yates shuffle produces ~2 such pairs
@@ -12,19 +12,20 @@ const MAX_ADJACENT_PAIRS = 2;
 // P(accept on first try) ≈ 62 %, so 8 attempts succeeds in > 99.9 % of calls.
 const MAX_SHUFFLE_ATTEMPTS = 8;
 
-function createDeck() {
+function createDeck(copiesPerCard = BASE_COPIES_PER_CARD) {
   const base = [];
   for (const card of CARDS) {
-    base.push(card, card, card);
+    for (let i = 0; i < copiesPerCard; i++) base.push(card);
   }
-  // Fisher-Yates shuffle with retry for fair distribution.
-  // Rejects unusually clustered results while keeping full randomness.
+  // Scale the clustering threshold with deck size.
+  // For 15 cards the expected adjacent pairs ≈ 2; for larger decks allow more.
+  const maxPairs = Math.max(MAX_ADJACENT_PAIRS, Math.floor(base.length / 6));
   let deck;
   let attempts = 0;
   do {
     deck = shuffle(base);
     attempts++;
-  } while (attempts < MAX_SHUFFLE_ATTEMPTS && countAdjacentPairs(deck) > MAX_ADJACENT_PAIRS);
+  } while (attempts < MAX_SHUFFLE_ATTEMPTS && countAdjacentPairs(deck) > maxPairs);
   return deck;
 }
 
@@ -66,8 +67,10 @@ function dealInitialCards(game) {
 
 function drawCard(game) {
   if (game.deck.length === 0) {
-    game.deck = createDeck();
-    // re-shuffle discard? For simplicity, fresh deck
+    // Deck should never run out — it is sized for the player count at game
+    // creation.  Returning null here is a safety fallback; callers that add
+    // a card before drawing (e.g. contest card-swap) will still work.
+    return null;
   }
   return game.deck.pop();
 }
@@ -79,10 +82,16 @@ function createGame(roomId, players) {
   const coreEnabled = n >= 3;
   const maxCharges = n >= 5 ? 4 : 3;
 
+  // Each player needs 4 cards (2 hand + 2 lives).  The deck must hold at
+  // least 4·n cards plus a small buffer for contest card-swaps.
+  // With 5 card types and BASE_COPIES_PER_CARD = 3 (15 cards), the base
+  // deck covers ≤3 players.  For 4+ players we add an extra copy of each type.
+  const copiesPerCard = Math.max(BASE_COPIES_PER_CARD, n);
+
   const game = {
     roomId,
     players: players.map(p => createPlayer(p.id, p.nick)),
-    deck: createDeck(),
+    deck: createDeck(copiesPerCard),
     discardPile: [],
     eliminatedCards: [], // life cards that have been revealed/lost
     core: { charges: 0, maxCharges, crypto: 0, enabled: coreEnabled },
@@ -130,6 +139,12 @@ function currentPlayer(game) {
 }
 
 function nextTurn(game) {
+  // If a previous elimination already ended the game, do NOT advance the turn.
+  // advanceTurn() unconditionally sets phase='action', which would overwrite
+  // the 'ended' phase set by checkWin() and prevent the server from detecting
+  // the game-over state — causing the game to freeze in an infinite bot loop.
+  if (game.phase === 'ended') return;
+
   let next = (game.currentPlayerIndex + 1) % game.players.length;
   let attempts = 0;
   while (game.players[next].eliminated && attempts < game.players.length) {
