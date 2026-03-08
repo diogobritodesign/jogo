@@ -405,17 +405,18 @@ function botRoomTick(roomId) {
   if (progress) {
     broadcastReveal(roomId, g);
     clearTurnTimer(roomId);
-    broadcastGameState(roomId);
     checkGameEnd(roomId, g);
     if (g.phase !== 'ended') {
       const nextId = getGameCurrentPlayerId(g);
       if (nextId) {
-        startTurnTimer(roomId, nextId);
+        const ms = RESPOND_PHASES.includes(g.phase) ? RESPOND_TIMEOUT_MS : TURN_TIMEOUT_MS;
+        startTurnTimer(roomId, nextId, ms);
         if (isBotId(nextId)) scheduleBotTick(roomId);
       }
     } else {
       botRooms.delete(roomId);
     }
+    broadcastGameState(roomId);
   } else if (g.phase !== 'ended') {
     // Still waiting on bots in a non-action phase — retry shortly
     const stillBotWaiting = g.waitingFor.some(id => isBotId(id));

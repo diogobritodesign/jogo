@@ -988,7 +988,6 @@ function renderOpponents(g,me){
     const isTurn=g.currentPlayerId===opp.id;
     const canTarget=targetMode!==null&&!opp.eliminated;
     const d=document.createElement('div');d.className='opp-seat';d.dataset.pos=idx;
-    const elimCards=opp.eliminated?(opp.livesRevealed.map((r,i)=>r?`<div class="elim-hcard"><span>${IC[opp.lives[i]]||'?'}</span><span class="elim-hcard-lbl">${(opp.lives[i]||'').toUpperCase()}</span></div>`:'').join('')):'';
     // Cards display: hidden lives as face-down locks, dead lives as face-up revealed cards
     const cardsHtml=opp.livesRevealed.map((rev,i)=>{
       if(rev&&opp.lives[i]){
@@ -1007,7 +1006,6 @@ function renderOpponents(g,me){
       <div class="opp-nick" style="color:${opp.eliminated?'var(--danger)':isTurn?'var(--cyan)':'var(--text)'}">${esc(opp.nick)}${opp.eliminated?' ☠':''}</div>
       <div class="opp-crypto">${opp.eliminated?'—':'₵'+opp.crypto}</div>
     </div>
-    ${opp.eliminated?`<div class="elim-hand">${elimCards}</div>`:''}
     </div>`;
     ring.appendChild(d);
   });
