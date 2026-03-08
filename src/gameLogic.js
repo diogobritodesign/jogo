@@ -340,7 +340,8 @@ function startContest(game, contesterId, targetId, claimedCard, contestType, isD
   const target = game.players.find(p => p.id === targetId);
 
   if (!contester || !target) {
-    game.log.push('⚠️ Erro: jogador não encontrado na contestação.');
+    const missing = !contester ? contesterId : targetId;
+    game.log.push(`⚠️ Erro: jogador ${missing} não encontrado na contestação.`);
     nextTurn(game);
     return;
   }

@@ -304,7 +304,7 @@ function autoPassTurn(roomId, playerId) {
     const result = game.autoPassWaiting(gameState, playerId);
     if (!result?.error) checkGameEnd(roomId, gameState);
   }
-  if (gameState.phase !== 'ended') checkGameEnd(roomId, gameState);
+  checkGameEnd(roomId, gameState);
   turnTimers.delete(roomId);
   if (gameState.phase !== 'ended') {
     const nextId = getGameCurrentPlayerId(gameState);
