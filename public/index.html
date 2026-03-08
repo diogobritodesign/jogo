@@ -319,6 +319,22 @@ input[type=range]{width:100%;accent-color:var(--cyan);cursor:pointer}
 .theme-btn{display:flex;align-items:center;gap:6px;padding:5px 9px;border-radius:4px;border:1px solid rgba(200,230,255,.12);background:transparent;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim);transition:all .15s;width:100%}
 .theme-btn:hover,.theme-btn.active{border-color:var(--cyan);color:var(--cyan);background:rgba(0,245,255,.06)}
 .theme-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+/* Avatar */
+.avatar{width:36px;height:36px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:.65rem;font-weight:700;color:var(--cyan);background:rgba(0,245,255,.08);overflow:hidden;flex-shrink:0}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.avatar-lg{width:72px;height:72px;font-size:1.2rem;border-width:2px}
+.avatar-sm{width:24px;height:24px;font-size:.45rem}
+.profile-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.profile-stat{background:rgba(0,245,255,.04);border:1px solid var(--border);border-radius:4px;padding:8px;text-align:center}
+.profile-stat-val{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:700;color:var(--cyan)}
+.profile-stat-lbl{font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--dim);letter-spacing:.12em;margin-top:3px}
+.profile-section{margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.profile-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.avatar-upload-area{display:flex;align-items:center;gap:14px;margin-bottom:10px}
+.avatar-upload-area input[type="file"]{display:none}
+.player-info-header{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.opp-avatar{position:absolute;top:-2px;right:-2px;z-index:2}
+.seat-wrap{position:relative}
 </style>
 </head>
 <body>
@@ -376,7 +392,7 @@ input[type=range]{width:100%;accent-color:var(--cyan);cursor:pointer}
     <button class="btn btn-secondary" onclick="showLeaderboard()">◈ LEADERBOARD</button>
     <button class="btn btn-secondary" onclick="showHistory()">📊 MEU HISTÓRICO</button>
     <div class="divider">conta</div>
-    <button class="btn btn-secondary" style="font-size:.6rem;padding:8px" onclick="openModal('modalChangePw')">🔑 TROCAR SENHA</button>
+    <button class="btn btn-secondary" style="font-size:.6rem;padding:8px" onclick="openModal('modalProfile')">👤 MEU PERFIL</button>
     <button class="btn btn-secondary" style="font-size:.6rem;padding:8px;margin-top:5px" onclick="showRules()">📋 REGRAS</button>
     <button class="btn btn-secondary" style="font-size:.6rem;padding:8px;margin-top:5px;color:var(--danger);border-color:rgba(255,23,68,.2)" onclick="doLogout()">⏻ SAIR</button>
   </div>
@@ -417,7 +433,8 @@ input[type=range]{width:100%;accent-color:var(--cyan);cursor:pointer}
       <div class="phase-lbl" id="phaseLbl">—</div>
       <button class="tb-btn" id="extendTurnBtn" onclick="doExtendTurn()" style="display:none;color:var(--gold);border-color:rgba(255,214,0,.35)" title="Pagar ₵1 para adicionar 30s ao seu turno">+30s ₵1</button>
       <button class="tb-btn" id="pauseVoteBtn" onclick="doVotePause()" title="Votar para pausar o jogo">⏸</button>
-      <button class="tb-btn" onclick="openModal('modalChangePw')" style="margin-left:4px">⚙ PERFIL</button>
+      <button class="tb-btn" onclick="confirmLeaveGame()" title="Sair da partida" style="margin-left:4px;color:var(--danger);border-color:rgba(255,23,68,.35)">✕</button>
+      <button class="tb-btn" onclick="openModal('modalProfile')" title="Meu Perfil">👤</button>
       <button class="tb-btn" onclick="toggleSettings()" title="Configurações (tema, zoom)">⚙ CONFIG</button>
     </div>
     <!-- REFERENCE PANEL -->
@@ -548,15 +565,63 @@ input[type=range]{width:100%;accent-color:var(--cyan);cursor:pointer}
     <button class="btn btn-secondary" onclick="closeModal('modalPlayVsBots')">← CANCELAR</button>
   </div>
 </div>
-<div class="modal-bg" id="modalChangePw">
-  <div class="modal">
-    <div class="modal-title">// trocar senha //</div>
-    <div class="field"><label>Senha Atual</label><input id="cpOld" type="password" placeholder="senha atual"></div>
-    <div class="field"><label>Nova Senha</label><input id="cpNew" type="password" placeholder="nova senha (mín. 4 chars)"></div>
-    <div class="field"><label>Confirmar Nova</label><input id="cpNew2" type="password" placeholder="repita a nova senha" onkeydown="if(event.key==='Enter')doChangePw()"></div>
-    <button class="btn btn-primary" onclick="doChangePw()">✓ CONFIRMAR</button>
-    <div class="err-msg" id="cpErr"></div>
-    <button class="btn btn-secondary" onclick="closeModal('modalChangePw')">← CANCELAR</button>
+<div class="modal-bg" id="modalProfile">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-title">// meu perfil //</div>
+    <div class="profile-section">
+      <div class="avatar-upload-area">
+        <div class="avatar avatar-lg" id="profileAvatar">??</div>
+        <div>
+          <button class="btn btn-secondary btn-sm" onclick="doUploadAvatar()" style="margin-bottom:5px">📷 Alterar Foto</button>
+          <button class="btn btn-secondary btn-sm" onclick="doRemoveAvatar()" style="font-size:.5rem;padding:3px 6px">✕ Remover</button>
+          <input type="file" id="avatarFileInput" accept="image/*" onchange="handleAvatarFile(this)" style="display:none">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:.5rem;color:var(--dim);margin-top:4px">JPEG/PNG • max 128px</div>
+        </div>
+      </div>
+    </div>
+    <div class="profile-section">
+      <label style="font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--cyan);letter-spacing:.15em">NICK</label>
+      <div style="display:flex;gap:7px;margin-top:5px">
+        <input id="profileNickInput" style="flex:1;background:rgba(0,245,255,.04);border:1px solid var(--border);border-radius:3px;padding:7px 10px;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:.85rem" maxlength="20" oninput="this.value=this.value.replace(/[^a-zA-Z0-9_\-\.]/g,'')">
+        <button class="btn btn-primary btn-sm" onclick="doChangeNick()">✓</button>
+      </div>
+    </div>
+    <div class="profile-section">
+      <label style="font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--cyan);letter-spacing:.15em">ESTATÍSTICAS</label>
+      <div class="profile-stats">
+        <div class="profile-stat"><div class="profile-stat-val" id="profileStatsPlayed">0</div><div class="profile-stat-lbl">PARTIDAS</div></div>
+        <div class="profile-stat"><div class="profile-stat-val" id="profileStatsWon">0</div><div class="profile-stat-lbl">VITÓRIAS</div></div>
+        <div class="profile-stat"><div class="profile-stat-val" id="profileStatsRate">0%</div><div class="profile-stat-lbl">WIN RATE</div></div>
+        <div class="profile-stat"><div class="profile-stat-val" id="profileStatsSince">—</div><div class="profile-stat-lbl">MEMBRO DESDE</div></div>
+      </div>
+    </div>
+    <div class="profile-section">
+      <label style="font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--cyan);letter-spacing:.15em;display:block;margin-bottom:8px">TROCAR SENHA</label>
+      <div class="field" style="margin-bottom:8px"><input id="cpOld" type="password" placeholder="senha atual" style="font-size:.8rem;padding:7px 10px"></div>
+      <div class="field" style="margin-bottom:8px"><input id="cpNew" type="password" placeholder="nova senha (mín. 4)" style="font-size:.8rem;padding:7px 10px"></div>
+      <div class="field" style="margin-bottom:8px"><input id="cpNew2" type="password" placeholder="confirmar nova senha" style="font-size:.8rem;padding:7px 10px" onkeydown="if(event.key==='Enter')doChangePw()"></div>
+      <button class="btn btn-primary btn-sm" onclick="doChangePw()" style="width:100%">🔑 ALTERAR SENHA</button>
+      <div class="err-msg" id="cpErr"></div>
+    </div>
+    <button class="btn btn-secondary" onclick="closeModal('modalProfile')" style="margin-top:6px">← FECHAR</button>
+  </div>
+</div>
+<div class="modal-bg" id="modalPlayerInfo">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-title">// perfil do jogador //</div>
+    <div class="player-info-header">
+      <div class="avatar avatar-lg" id="piAvatar">??</div>
+      <div>
+        <div id="piNick" style="font-family:'Orbitron',monospace;font-size:1rem;font-weight:700;color:var(--cyan)">—</div>
+      </div>
+    </div>
+    <div class="profile-stats">
+      <div class="profile-stat"><div class="profile-stat-val" id="piPlayed">0</div><div class="profile-stat-lbl">PARTIDAS</div></div>
+      <div class="profile-stat"><div class="profile-stat-val" id="piWon">0</div><div class="profile-stat-lbl">VITÓRIAS</div></div>
+      <div class="profile-stat"><div class="profile-stat-val" id="piRate">0%</div><div class="profile-stat-lbl">WIN RATE</div></div>
+      <div class="profile-stat"><div class="profile-stat-val" id="piSince">—</div><div class="profile-stat-lbl">MEMBRO DESDE</div></div>
+    </div>
+    <button class="btn btn-secondary" onclick="closeModal('modalPlayerInfo')" style="margin-top:10px">← FECHAR</button>
   </div>
 </div>
 <div class="modal-bg" id="modalLB">
@@ -744,11 +809,16 @@ async function doRegister(){
   try{const r=await post('/api/register',{nick,password:pass});if(r.error){document.getElementById('rErr').textContent=r.error;return}saveToken(r.token,false);myId=r.player.id;myNick=r.player.nick;send('auth',{token:r.token})}catch{document.getElementById('rErr').textContent='Erro de conexão.'}
 }
 async function doChangePw(){
-  const old=document.getElementById('cpOld').value,nw=document.getElementById('cpNew').value,nw2=document.getElementById('cpNew2').value;
-  document.getElementById('cpErr').textContent='';
-  if(!old||!nw){document.getElementById('cpErr').textContent='Preencha todos os campos.';return}
-  if(nw!==nw2){document.getElementById('cpErr').textContent='As senhas não coincidem.';return}
-  try{const r=await post('/api/change-password',{oldPassword:old,newPassword:nw},true);if(r.error){document.getElementById('cpErr').textContent=r.error;return}toast('Senha alterada!','ok');closeModal('modalChangePw');['cpOld','cpNew','cpNew2'].forEach(id=>document.getElementById(id).value='')}catch{document.getElementById('cpErr').textContent='Erro.'}
+  const o=document.getElementById('cpOld').value,n=document.getElementById('cpNew').value,n2=document.getElementById('cpNew2').value;
+  const el=document.getElementById('cpErr');
+  if(!o||!n){el.textContent='Preencha todos os campos';return}
+  if(n!==n2){el.textContent='Senhas não conferem';return}
+  fetch('/api/change-password',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({oldPassword:o,newPassword:n})})
+    .then(r=>r.json()).then(r=>{
+      if(r.error){el.textContent=r.error;return}
+      el.textContent='';toast('Senha alterada!');
+      document.getElementById('cpOld').value='';document.getElementById('cpNew').value='';document.getElementById('cpNew2').value='';
+    }).catch(()=>{el.textContent='Erro de conexão'});
 }
 function doLogout(){clearAuth();showScreen('login')}
 function clearAuth(){token=null;localStorage.removeItem('sb_t');sessionStorage.removeItem('sb_t');myId=null;myNick=null}
@@ -802,7 +872,7 @@ function renderLobby(){
   lockTag.style.display=myRoom.hasPassword?'block':'none';
   document.getElementById('lobbyList').innerHTML=myRoom.players.map(p=>`
     <div class="player-item ${p.id===myRoom.host_id?'host':''}">
-      <div class="pulse-dot"></div><div style="font-weight:600">${esc(p.nick)}</div>
+      <div class="avatar avatar-sm" style="margin-right:5px">${p.avatar?'<img src="'+esc(p.avatar)+'">':esc(p.nick).substring(0,2).toUpperCase()}</div><div style="font-weight:600">${esc(p.nick)}</div>
       ${p.id===myRoom.host_id?'<div class="host-tag">HOST</div>':''}
     </div>`).join('');
   document.getElementById('hostCtrl').style.display=isHost?'block':'none';
@@ -1002,8 +1072,11 @@ function renderOpponents(g,me){
     >${isTurn?'<div class="turn-arr">▼</div>':''}
     ${!opp.connected?'<div class="off-tag">OFFLINE</div>':''}
     <div class="seat-cards">${cardsHtml}</div>
-    <div class="seat-info">
-      <div class="opp-nick" style="color:${opp.eliminated?'var(--danger)':isTurn?'var(--cyan)':'var(--text)'}">${esc(opp.nick)}${opp.eliminated?' ☠':''}</div>
+    <div class="seat-info" onclick="showPlayerInfo('${opp.id}')" style="cursor:pointer" title="Ver perfil">
+      <div style="display:flex;align-items:center;gap:5px;justify-content:center">
+        <div class="avatar avatar-sm">${opp.avatar?'<img src="'+esc(opp.avatar)+'">':esc(opp.nick).substring(0,2).toUpperCase()}</div>
+        <div class="opp-nick" style="color:${opp.eliminated?'var(--danger)':isTurn?'var(--cyan)':'var(--text)'}">${esc(opp.nick)}${opp.eliminated?' ☠':''}</div>
+      </div>
       <div class="opp-crypto">${opp.eliminated?'—':'₵'+opp.crypto}</div>
     </div>
     </div>`;
@@ -1027,7 +1100,10 @@ function renderOpponents(g,me){
       ${isTurn?'<div class="turn-arr">▼</div>':''}
       <div class="seat-cards">${handHtml}${deadLivesHtml}</div>
       <div class="seat-info">
-        <div class="opp-nick" style="color:${me.eliminated?'var(--danger)':'var(--cyan)'}">⬡ ${esc(me.nick)}${me.eliminated?' ☠':''}</div>
+        <div style="display:flex;align-items:center;gap:5px;justify-content:center">
+          <div class="avatar avatar-sm">${me.avatar?'<img src="'+esc(me.avatar)+'">':esc(me.nick).substring(0,2).toUpperCase()}</div>
+          <div class="opp-nick" style="color:${me.eliminated?'var(--danger)':'var(--cyan)'}">⬡ ${esc(me.nick)}${me.eliminated?' ☠':''}</div>
+        </div>
         <div class="opp-crypto">${me.eliminated?'—':'₵'+me.crypto}</div>
       </div>
     </div>`;
@@ -1415,6 +1491,7 @@ async function showHistory(){
 
 // ── MODAL ─────────────────────────────────────────────────────────────────────
 function openModal(id){
+  if(id==='modalProfile') loadProfile();
   document.getElementById(id).classList.add('active');
   if(id==='modalPlayVsBots'){setPvbBots(pvbBots);setPvbDiff(pvbDiff);}
 }
@@ -1566,6 +1643,95 @@ function closeCardInspect(e){
   if(ov._keyHandler){document.removeEventListener('keydown',ov._keyHandler);delete ov._keyHandler;}
   const wrap=document.getElementById('cardInspectWrap');
   wrap.style.transform='';
+}
+
+// ── PROFILE ────────────────────────────────────────────────────────────────
+let myAvatar=null;
+function loadProfile(){
+  fetch('/api/me',{headers:{Authorization:'Bearer '+token}}).then(r=>r.json()).then(p=>{
+    myAvatar=p.avatar||null;
+    document.getElementById('profileAvatar').innerHTML=p.avatar?'<img src="'+esc(p.avatar)+'">':esc(p.nick).substring(0,2).toUpperCase();
+    document.getElementById('profileNickInput').value=p.nick;
+    document.getElementById('profileStatsPlayed').textContent=p.games_played||0;
+    document.getElementById('profileStatsWon').textContent=p.games_won||0;
+    const rate=p.games_played>0?Math.round((p.games_won/p.games_played)*100):0;
+    document.getElementById('profileStatsRate').textContent=rate+'%';
+    document.getElementById('profileStatsSince').textContent=p.created_at?new Date(p.created_at+'Z').toLocaleDateString('pt-BR'):'—';
+  }).catch(()=>{});
+}
+function doChangeNick(){
+  const newNick=document.getElementById('profileNickInput').value.trim();
+  if(!newNick){toast('Digite um nick','error');return}
+  fetch('/api/change-nick',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({newNick})})
+    .then(r=>r.json()).then(r=>{
+      if(r.error){toast(r.error,'error');return}
+      myNick=newNick;
+      document.getElementById('menuWelcome').textContent='// '+myNick+' //';
+      toast('Nick alterado!');
+      loadProfile();
+    }).catch(()=>toast('Erro ao trocar nick','error'));
+}
+function doUploadAvatar(){
+  document.getElementById('avatarFileInput').click();
+}
+function handleAvatarFile(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const img=new Image();
+    img.onload=function(){
+      const canvas=document.createElement('canvas');
+      const MAX=128;
+      let w=img.width,h=img.height;
+      if(w>h){h=Math.round(h*MAX/w);w=MAX}else{w=Math.round(w*MAX/h);h=MAX}
+      canvas.width=w;canvas.height=h;
+      const ctx=canvas.getContext('2d');
+      ctx.drawImage(img,0,0,w,h);
+      canvas.toBlob(function(blob){
+        if(!blob)return;
+        const fd=new FormData();fd.append('avatar',blob,'avatar.jpeg');
+        fetch('/api/avatar',{method:'POST',headers:{Authorization:'Bearer '+token},body:fd})
+          .then(r=>r.json()).then(r=>{
+            if(r.error){toast(r.error,'error');return}
+            myAvatar=r.avatar;
+            document.getElementById('profileAvatar').innerHTML='<img src="'+esc(r.avatar)+'">';
+            toast('Avatar atualizado!');
+          }).catch(()=>toast('Erro ao enviar avatar','error'));
+      },'image/jpeg',0.7);
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+  input.value='';
+}
+function doRemoveAvatar(){
+  fetch('/api/avatar',{method:'DELETE',headers:{Authorization:'Bearer '+token}})
+    .then(r=>r.json()).then(r=>{
+      if(r.error){toast(r.error,'error');return}
+      myAvatar=null;
+      document.getElementById('profileAvatar').innerHTML=esc(myNick||'?').substring(0,2).toUpperCase();
+      toast('Avatar removido');
+    }).catch(()=>toast('Erro','error'));
+}
+function showPlayerInfo(playerId){
+  if(!playerId)return;
+  fetch('/api/player/'+encodeURIComponent(playerId),{headers:{Authorization:'Bearer '+token}}).then(r=>r.json()).then(p=>{
+    if(p.error){toast(p.error,'error');return}
+    const rate=p.games_played>0?Math.round((p.games_won/p.games_played)*100):0;
+    document.getElementById('piAvatar').innerHTML=p.avatar?'<img src="'+esc(p.avatar)+'">':esc(p.nick).substring(0,2).toUpperCase();
+    document.getElementById('piNick').textContent=p.nick;
+    document.getElementById('piPlayed').textContent=p.games_played||0;
+    document.getElementById('piWon').textContent=p.games_won||0;
+    document.getElementById('piRate').textContent=rate+'%';
+    document.getElementById('piSince').textContent=p.created_at?new Date(p.created_at+'Z').toLocaleDateString('pt-BR'):'—';
+    openModal('modalPlayerInfo');
+  }).catch(()=>toast('Erro ao carregar perfil','error'));
+}
+function confirmLeaveGame(){
+  if(gameState&&gameState.phase!=='ended'){
+    if(!confirm('Sair da partida? Você pode perder a partida.'))return;
+  }
+  send('leave_room');
 }
 </script>
 <!-- GLOBAL SETTINGS BUTTON (always visible) -->

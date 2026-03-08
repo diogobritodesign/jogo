@@ -112,6 +112,33 @@ app.get('/api/me', authMiddleware, (req,res) => {
 app.get('/api/my-history', authMiddleware, (req,res) => {
   res.json(db.getPlayerHistory(req.user.id, 20));
 });
+app.post('/api/change-nick', authMiddleware, (req,res) => {
+  const r = db.changeNick(req.user.id, req.body.newNick);
+  if (r.error) return res.status(400).json(r);
+  res.json(r);
+});
+app.get('/api/player/:id', authMiddleware, (req,res) => {
+  const p = db.getPublicProfile(req.params.id);
+  if (!p) return res.status(404).json({error:'Jogador não encontrado'});
+  res.json(p);
+});
+
+// Avatar upload — client sends base64 JPEG (max ~150KB after compression)
+const avatarUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 512 * 1024 } });
+app.post('/api/avatar', authMiddleware, avatarUpload.single('avatar'), (req,res) => {
+  if (!req.file) return res.status(400).json({error:'Nenhum arquivo enviado'});
+  // Accept JPEG/PNG, store as data URI (client-side canvas already compressed it)
+  const mime = req.file.mimetype;
+  if (!['image/jpeg','image/png','image/webp'].includes(mime)) return res.status(400).json({error:'Formato inválido. Use JPEG ou PNG.'});
+  const b64 = `data:${mime};base64,${req.file.buffer.toString('base64')}`;
+  if (b64.length > 200000) return res.status(400).json({error:'Imagem muito grande. Máximo ~150KB.'});
+  db.updateAvatar(req.user.id, b64);
+  res.json({ok:true, avatar:b64});
+});
+app.delete('/api/avatar', authMiddleware, (req,res) => {
+  db.updateAvatar(req.user.id, null);
+  res.json({ok:true});
+});
 
 // ── GAME ROUTES ───────────────────────────────────────────────────────────────
 app.get('/api/leaderboard', (req,res) => res.json(db.getLeaderboard()));
@@ -244,6 +271,10 @@ function broadcastGameState(roomId, gOverride) {
       state.pauseVotes = votes
         ? { count: votes.size, needed: computePauseNeeded(g) }
         : null;
+      // Enrich player data with avatars from DB (small base64 strings)
+      for (const sp of state.players) {
+        sp.avatar = db.getPlayerAvatar(sp.id);
+      }
       ws.send(JSON.stringify({type:'game_state', state}));
     }
   }

@@ -60,6 +60,7 @@ async function init() {
     "ALTER TABLE rooms ADD COLUMN password TEXT DEFAULT NULL",
     "ALTER TABLE game_history ADD COLUMN duration_seconds INTEGER DEFAULT 0",
     "ALTER TABLE game_history ADD COLUMN players_json TEXT DEFAULT '[]'",
+    "ALTER TABLE players ADD COLUMN avatar TEXT DEFAULT NULL",
   ];
   for (const sql of migrate) { try { db.run(sql); } catch(e) {} }
   db.run("UPDATE players SET nick_lower = LOWER(nick) WHERE nick_lower IS NULL");
@@ -118,11 +119,23 @@ async function adminResetPassword(targetId, newPassword) {
 }
 
 // ── PLAYERS ──────────────────────────────────────────────────────────────────
-function getPlayer(id) { return get('SELECT id,nick,role,banned,games_played,games_won,last_seen,created_at FROM players WHERE id=?',[id]); }
+function getPlayer(id) { return get('SELECT id,nick,role,banned,games_played,games_won,avatar,last_seen,created_at FROM players WHERE id=?',[id]); }
+function getPublicProfile(id) { return get('SELECT id,nick,games_played,games_won,avatar,created_at FROM players WHERE id=?',[id]); }
 function getAllPlayers() { return all('SELECT id,nick,role,banned,games_played,games_won,last_seen,created_at FROM players ORDER BY created_at DESC'); }
 function banPlayer(id, banned) { run('UPDATE players SET banned=? WHERE id=?',[banned?1:0,id]); return {ok:true}; }
 function deletePlayer(id) { run('DELETE FROM room_players WHERE player_id=?',[id]); run('DELETE FROM players WHERE id=?',[id]); return {ok:true}; }
-function getLeaderboard() { return all("SELECT nick,games_won,games_played FROM players WHERE role!=? ORDER BY games_won DESC,games_played DESC LIMIT 20",['admin']); }
+function getLeaderboard() { return all("SELECT nick,games_won,games_played,avatar FROM players WHERE role!=? ORDER BY games_won DESC,games_played DESC LIMIT 20",['admin']); }
+function getPlayerAvatar(id) { const r = get('SELECT avatar FROM players WHERE id=?',[id]); return r?.avatar || null; }
+function updateAvatar(id, avatarBase64) { run('UPDATE players SET avatar=? WHERE id=?',[avatarBase64,id]); return {ok:true}; }
+function changeNick(playerId, newNick) {
+  if (!newNick||newNick.length<2||newNick.length>20) return {error:'Nick deve ter 2-20 caracteres'};
+  if (!/^[a-zA-Z0-9_\-\.]+$/.test(newNick)) return {error:'Nick: apenas letras, números, _ e -'};
+  const nickLower = newNick.toLowerCase();
+  const existing = get('SELECT id FROM players WHERE nick_lower=? AND id!=?',[nickLower,playerId]);
+  if (existing) return {error:'Nick já em uso'};
+  run('UPDATE players SET nick=?,nick_lower=? WHERE id=?',[newNick,nickLower,playerId]);
+  return {ok:true,nick:newNick};
+}
 function recordWin(pid) { run('UPDATE players SET games_won=games_won+1,games_played=games_played+1 WHERE id=?',[pid]); }
 function recordGamePlayed(pids) { for(const id of pids) run('UPDATE players SET games_played=games_played+1 WHERE id=?',[id]); }
 
@@ -165,13 +178,13 @@ function createRoom(hostId, maxPlayers=6, password=null) {
 function getRoom(roomId) {
   const room=get('SELECT * FROM rooms WHERE id=?',[roomId]);
   if(!room) return null;
-  room.players=all('SELECT p.id,p.nick FROM room_players rp JOIN players p ON rp.player_id=p.id WHERE rp.room_id=?',[roomId]);
+  room.players=all('SELECT p.id,p.nick,p.avatar FROM room_players rp JOIN players p ON rp.player_id=p.id WHERE rp.room_id=?',[roomId]);
   room.hasPassword=!!room.password;
   return room;
 }
 function getAllRooms() {
   return all("SELECT * FROM rooms WHERE status!='finished' ORDER BY created_at DESC").map(r=>{
-    r.players=all('SELECT p.id,p.nick FROM room_players rp JOIN players p ON rp.player_id=p.id WHERE rp.room_id=?',[r.id]);
+    r.players=all('SELECT p.id,p.nick,p.avatar FROM room_players rp JOIN players p ON rp.player_id=p.id WHERE rp.room_id=?',[r.id]);
     r.hasPassword=!!r.password; return r;
   });
 }
@@ -205,9 +218,10 @@ function saveGameResult(roomId, winnerId, playerIds, durationSeconds=0) {
 
 module.exports = {
   init,
-  registerPlayer, loginPlayer, changePassword, adminResetPassword,
-  getPlayer, getAllPlayers, banPlayer, deletePlayer,
+  registerPlayer, loginPlayer, changePassword, adminResetPassword, changeNick,
+  getPlayer, getPublicProfile, getAllPlayers, banPlayer, deletePlayer,
   getLeaderboard, recordWin, recordGamePlayed, getPlayerHistory,
+  getPlayerAvatar, updateAvatar,
   getStats, getGameHistory,
   createRoom, getRoom, getAllRooms, getRoomByCode, joinRoom, leaveRoom, closeRoom, setRoomStatus, saveGameResult,
 };
