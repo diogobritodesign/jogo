@@ -283,6 +283,19 @@ function autoPassTurn(roomId, playerId) {
       action:'⏱️ Tempo esgotado — Renda automática',
       type:'timeout',
     });
+  } else if (gameState.phase === 'contest_block') {
+    // Block-response window expired — actor auto-passes (accepts the block)
+    const actorId = gameState.waitingFor[0];
+    if (actorId) {
+      const r = game.respondToBlock(gameState, actorId, { type: 'pass' });
+      if (!r?.error) {
+        broadcast(roomId, 'notification', {
+          nick: '⏱️',
+          action: 'Tempo esgotado — bloqueio aceito automaticamente',
+          type: 'timeout',
+        });
+      }
+    }
   } else if (RESPOND_PHASES.includes(gameState.phase)) {
     // Intervention window expired — auto-pass all waiting players
     const waitingIds = [...gameState.waitingFor];
@@ -290,7 +303,7 @@ function autoPassTurn(roomId, playerId) {
     for (const wid of waitingIds) {
       if (!gameState.waitingFor.includes(wid)) continue;
       const r = game.autoPassWaiting(gameState, wid);
-      if (!r?.error) { checkGameEnd(roomId, gameState); passed = true; }
+      if (!r?.error) { passed = true; }
       if (!RESPOND_PHASES.includes(gameState.phase)) break;
     }
     if (passed) {
@@ -313,7 +326,6 @@ function autoPassTurn(roomId, playerId) {
     }
   } else {
     const result = game.autoPassWaiting(gameState, playerId);
-    if (!result?.error) checkGameEnd(roomId, gameState);
   }
   checkGameEnd(roomId, gameState);
   turnTimers.delete(roomId);

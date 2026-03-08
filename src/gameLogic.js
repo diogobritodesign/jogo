@@ -531,7 +531,7 @@ function resolveAction(game) {
     }
   }
 
-  checkWin(game);
+  if (game.phase !== 'ended') checkWin(game);
   nextTurn(game);
 }
 
