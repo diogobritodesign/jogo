@@ -1072,7 +1072,7 @@ function renderOpponents(g,me){
     >${isTurn?'<div class="turn-arr">▼</div>':''}
     ${!opp.connected?'<div class="off-tag">OFFLINE</div>':''}
     <div class="seat-cards">${cardsHtml}</div>
-    <div class="seat-info" onclick="showPlayerInfo('${opp.id}')" style="cursor:pointer" title="Ver perfil">
+    <div class="seat-info" data-player-id="${esc(opp.id)}" style="cursor:pointer" title="Ver perfil">
       <div style="display:flex;align-items:center;gap:5px;justify-content:center">
         <div class="avatar avatar-sm">${opp.avatar?'<img src="'+esc(opp.avatar)+'">':esc(opp.nick).substring(0,2).toUpperCase()}</div>
         <div class="opp-nick" style="color:${opp.eliminated?'var(--danger)':isTurn?'var(--cyan)':'var(--text)'}">${esc(opp.nick)}${opp.eliminated?' ☠':''}</div>
@@ -1555,6 +1555,12 @@ window.addEventListener('DOMContentLoaded',()=>{
   // Load custom card images
   loadCardImages();
 
+  // Delegated click handler for opponent profile info
+  document.addEventListener('click', e => {
+    const seatInfo = e.target.closest('.seat-info[data-player-id]');
+    if (seatInfo) showPlayerInfo(seatInfo.dataset.playerId);
+  });
+
   // If opened as simulation spectator, switch straight to game screen
   if(_urlSimId){
     document.getElementById('globalSettingsBtn').classList.add('hidden-in-sim');
@@ -1728,7 +1734,7 @@ function showPlayerInfo(playerId){
   }).catch(()=>toast('Erro ao carregar perfil','error'));
 }
 function confirmLeaveGame(){
-  if(gameState&&gameState.phase!=='ended'){
+  if(gameState && gameState.phase !== 'ended'){
     if(!confirm('Sair da partida? Você pode perder a partida.'))return;
   }
   send('leave_room');
