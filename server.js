@@ -300,6 +300,17 @@ function autoPassTurn(roomId, playerId) {
         type: 'timeout',
       });
     }
+  } else if (gameState.phase === 'sniffer_choice') {
+    // Sniffer choice timed out — auto-resolve with no swap (+₵1 bonus)
+    const actorId = gameState.pendingAction?.actorId;
+    if (actorId && gameState.waitingFor.includes(actorId)) {
+      game.resolveSnifferChoice(gameState, actorId, { swap: false });
+      broadcast(roomId, 'notification', {
+        nick: '⏱️',
+        action: 'Tempo de análise esgotado — otimização automática',
+        type: 'timeout',
+      });
+    }
   } else {
     const result = game.autoPassWaiting(gameState, playerId);
     if (!result?.error) checkGameEnd(roomId, gameState);
@@ -308,7 +319,12 @@ function autoPassTurn(roomId, playerId) {
   turnTimers.delete(roomId);
   if (gameState.phase !== 'ended') {
     const nextId = getGameCurrentPlayerId(gameState);
-    if (nextId) startTurnTimer(roomId, nextId);
+    if (nextId) {
+      const ms = RESPOND_PHASES.includes(gameState.phase) ? RESPOND_TIMEOUT_MS : TURN_TIMEOUT_MS;
+      startTurnTimer(roomId, nextId, ms);
+    }
+    // If bots need to act next, schedule a bot tick
+    if (botRooms.has(roomId)) scheduleBotTick(roomId);
   }
   broadcastGameState(roomId);
 }

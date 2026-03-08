@@ -502,8 +502,13 @@ function resolveAction(game) {
       const target = game.players.find(p => p.id === action.targetId);
       if (!target) { break; }
       actor.crypto -= action.cost;
-      game.log.push(`💉 Trojan executado! ${target.nick} perde 1 carta.`);
-      loseLife(game, target);
+      if (target.eliminated) {
+        // Target was already eliminated during a contest — skip the extra loseLife
+        game.log.push(`💉 Trojan cancelado: ${target.nick} já foi eliminado.`);
+      } else {
+        game.log.push(`💉 Trojan executado! ${target.nick} perde 1 carta.`);
+        loseLife(game, target);
+      }
       break;
     }
     case 'intercept': {
