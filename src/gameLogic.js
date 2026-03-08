@@ -379,10 +379,12 @@ function startContest(game, contesterId, targetId, claimedCard, contestType, isD
     game.deck.push(claimedCard);
     game.deck = shuffle(game.deck);
     const newCard = drawCard(game);
-    target.hand.push(newCard);
-    // Keep lives in sync — update the matching unrevealed life card
-    const lifeSwapIdx = target.lives.findIndex((c, i) => c === claimedCard && !target.livesRevealed[i]);
-    if (lifeSwapIdx !== -1) target.lives[lifeSwapIdx] = newCard;
+    if (newCard) {
+      target.hand.push(newCard);
+      // Keep lives in sync — update the matching unrevealed life card
+      const lifeSwapIdx = target.lives.findIndex((c, i) => c === claimedCard && !target.livesRevealed[i]);
+      if (lifeSwapIdx !== -1) target.lives[lifeSwapIdx] = newCard;
+    }
 
     if (contestType === 'block') {
       game.log.push(`🛡️ Bloqueio confirmado. Ação cancelada.`);
