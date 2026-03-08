@@ -19,6 +19,7 @@ function createDeck(copiesPerCard = BASE_COPIES_PER_CARD) {
   }
   // Scale the clustering threshold with deck size.
   // For 15 cards the expected adjacent pairs ≈ 2; for larger decks allow more.
+  // Dividing by 6 keeps the ratio ≈ 1 pair per 6 cards (15/6≈2, 20/6≈3, 30/6=5).
   const maxPairs = Math.max(MAX_ADJACENT_PAIRS, Math.floor(base.length / 6));
   let deck;
   let attempts = 0;
@@ -83,9 +84,9 @@ function createGame(roomId, players) {
   const maxCharges = n >= 5 ? 4 : 3;
 
   // Each player needs 4 cards (2 hand + 2 lives).  The deck must hold at
-  // least 4·n cards plus a small buffer for contest card-swaps.
-  // With 5 card types and BASE_COPIES_PER_CARD = 3 (15 cards), the base
-  // deck covers ≤3 players.  For 4+ players we add an extra copy of each type.
+  // least 4·n cards.  With 5 card types, copiesPerCard = n gives exactly
+  // 5·n cards → 5·n − 4·n = n cards remaining in the deck after the deal,
+  // which is enough for contest card-swaps (net-zero: 1 added, 1 drawn).
   const copiesPerCard = Math.max(BASE_COPIES_PER_CARD, n);
 
   const game = {
