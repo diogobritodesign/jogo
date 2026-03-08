@@ -209,8 +209,8 @@ function broadcast(roomId, type, data, excludeId=null) {
   }
 }
 
-function broadcastGameState(roomId) {
-  const g = activeGames.get(roomId);
+function broadcastGameState(roomId, gOverride) {
+  const g = gOverride || activeGames.get(roomId);
   if (!g) return;
   const startTime = gameStartTimes.get(roomId);
   const matchDuration = startTime ? Math.floor((Date.now() - startTime) / 1000) : 0;
@@ -326,7 +326,7 @@ function autoPassTurn(roomId, playerId) {
     // If bots need to act next, schedule a bot tick
     if (botRooms.has(roomId)) scheduleBotTick(roomId);
   }
-  broadcastGameState(roomId);
+  broadcastGameState(roomId, gameState);
 }
 
 function startTurnTimer(roomId, playerId, allowedMs = TURN_TIMEOUT_MS) {
@@ -432,7 +432,7 @@ function botRoomTick(roomId) {
     } else {
       botRooms.delete(roomId);
     }
-    broadcastGameState(roomId);
+    broadcastGameState(roomId, g);
   } else if (g.phase !== 'ended') {
     // Still waiting on bots in a non-action phase — retry shortly
     const stillBotWaiting = g.waitingFor.some(id => isBotId(id));
@@ -801,7 +801,7 @@ wss.on('connection', (ws) => {
           const ms = RESPOND_PHASES.includes(g.phase) ? RESPOND_TIMEOUT_MS : TURN_TIMEOUT_MS;
           startTurnTimer(info.roomId, getGameCurrentPlayerId(g), ms);
         }
-        broadcastGameState(info.roomId);
+        broadcastGameState(info.roomId, g);
         if (g.phase!=='ended' && botRooms.has(info.roomId)) scheduleBotTick(info.roomId);
         break;
       }
@@ -830,7 +830,7 @@ wss.on('connection', (ws) => {
           const ms = RESPOND_PHASES.includes(g.phase) ? RESPOND_TIMEOUT_MS : TURN_TIMEOUT_MS;
           startTurnTimer(info.roomId, getGameCurrentPlayerId(g), ms);
         }
-        broadcastGameState(info.roomId);
+        broadcastGameState(info.roomId, g);
         if (g.phase!=='ended' && botRooms.has(info.roomId)) scheduleBotTick(info.roomId);
         break;
       }
@@ -849,7 +849,7 @@ wss.on('connection', (ws) => {
           const ms = RESPOND_PHASES.includes(g.phase) ? RESPOND_TIMEOUT_MS : TURN_TIMEOUT_MS;
           startTurnTimer(info.roomId, getGameCurrentPlayerId(g), ms);
         }
-        broadcastGameState(info.roomId);
+        broadcastGameState(info.roomId, g);
         if (g.phase!=='ended' && botRooms.has(info.roomId)) scheduleBotTick(info.roomId);
         break;
       }
@@ -878,7 +878,7 @@ wss.on('connection', (ws) => {
         clearTurnTimer(info.roomId);
         checkGameEnd(info.roomId, g);
         if (g.phase!=='ended') startTurnTimer(info.roomId, getGameCurrentPlayerId(g));
-        broadcastGameState(info.roomId);
+        broadcastGameState(info.roomId, g);
         if (g.phase!=='ended' && botRooms.has(info.roomId)) scheduleBotTick(info.roomId);
         break;
       }
