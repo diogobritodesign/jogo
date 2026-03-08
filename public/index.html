@@ -135,7 +135,7 @@ input[type=range]{width:100%;accent-color:var(--cyan);cursor:pointer}
 .nc.on{background:var(--magenta);box-shadow:0 0 7px var(--magenta)}
 /* OPPONENTS — poker-style seats */
 .opp-ring{position:absolute;inset:0;pointer-events:none}
-.opp-seat{position:absolute;transform:translate(-50%,-50%);pointer-events:all;transition:all .4s}
+.opp-seat{position:absolute;transform:translate(-50%,-50%);pointer-events:all}
 .opp-seat[data-pos="0"]{left:50%;top:9%}
 .opp-seat[data-pos="1"]{left:12%;top:28%}
 .opp-seat[data-pos="2"]{left:88%;top:28%}
@@ -587,7 +587,9 @@ input[type=range]{width:100%;accent-color:var(--cyan);cursor:pointer}
       <p style="margin-bottom:3px">• <b>Ajuda Externa</b>: +₵2 (bloqueável pelo Admin)</p>
       <p style="margin-bottom:13px">• <b>Global Breach</b>: ₵7 — alvo perde 1 vida. +1 Carga e ₵1 ao Núcleo.</p>
       <p style="color:var(--magenta);font-size:.62rem;letter-spacing:.12em;margin-bottom:5px">⚡ PROTOCOLO DDoS</p>
-      <p>3 Cargas no Núcleo → perdedor de contestação é eliminado. Vencedor saqueia o Núcleo.</p>
+      <p style="margin-bottom:3px">3 Cargas no Núcleo → DDoS disponível ao contestar.</p>
+      <p style="margin-bottom:3px">☢️ <b>DDoS + Duvidar</b>: perdedor é <b>eliminado completamente</b> (vira 2 vidas, crypto volta ao banco).</p>
+      <p>Vencedor coleta TODO o Crypto do Núcleo. Núcleo reseta para 0.</p>
     </div>
     <button class="btn btn-secondary" style="margin-top:14px" onclick="closeModal('modalRules')">← FECHAR</button>
   </div>
@@ -996,17 +998,24 @@ function renderOpponents(g,me){
     </div>`;
     ring.appendChild(d);
   });
-  // Self seat — current player appears on the table at the bottom centre, showing their own hand cards
+  // Self seat — current player appears on the table at the bottom centre, showing their own hand cards + life pips
   if(me){
     const isTurn=g.currentPlayerId===myId;
     const d=document.createElement('div');d.className='opp-seat';d.dataset.pos='self';
+    // Life pips (always shown, same as opponents — dead ones show revealed card in red)
+    const selfLivesHtml=me.livesRevealed.map((rev,i)=>{
+      if(rev){
+        return `<div class="life-pip dead"${me.lives[i]?` data-card="${esc(me.lives[i])}" onclick="openCardInspect('${esc(me.lives[i])}')" style="cursor:zoom-in"`:``}>${me.lives[i]?IC[me.lives[i]]:'☠'}</div>`;
+      }
+      return `<div class="life-pip">🔒</div>`;
+    }).join('');
     // Show actual hand cards (others only see '?' — only self gets real values)
-    const cardHtml=!me.eliminated&&me.hand&&me.hand.length>0
+    const handHtml=!me.eliminated&&me.hand&&me.hand.length>0
       ? me.hand.map(c=>`<div class="self-hcard" data-card="${esc(c)}" title="Inspecionar ${esc(c)}" onclick="openCardInspect('${esc(c)}')" style="cursor:zoom-in"><div class="self-hcard-icon">${IC[c]||'?'}</div><div class="self-hcard-lbl">${esc(c)}</div></div>`).join('')
-      : me.livesRevealed.map((rev,i)=>rev?`<div class="life-pip dead" data-card="${esc(me.lives[i]||'')}" onclick="openCardInspect('${esc(me.lives[i]||'')}')" style="cursor:zoom-in">${me.lives[i]?IC[me.lives[i]]:'☠'}</div>`:'').join('');
+      : '';
     d.innerHTML=`<div class="seat-wrap${isTurn?' my-turn':''}${me.eliminated?' out':''}" id="oppcard-self">
       ${isTurn?'<div class="turn-arr">▼</div>':''}
-      <div class="seat-cards">${cardHtml}</div>
+      <div class="seat-cards">${selfLivesHtml}${handHtml}</div>
       <div class="seat-info">
         <div class="opp-nick" style="color:${me.eliminated?'var(--danger)':'var(--cyan)'}">⬡ ${esc(me.nick)}${me.eliminated?' ☠':''}</div>
         <div class="opp-crypto">${me.eliminated?'—':'₵'+me.crypto}</div>
@@ -1024,9 +1033,8 @@ function renderActions(g,me){
   if(respondTimerKey&&!_inRespond){clearTimeout(respondAutoPassTimer);respondAutoPassTimer=null;respondTimerKey=null;}
   if(isSpectating){el.innerHTML='<div class="alert-box alert-spec">👁 Modo espectador — você foi eliminado</div>';return}
   const myTurn=g.currentPlayerId===myId,waiting=g.waitingFor.includes(myId);
-  // DDoS — free action, any player, once per game, only when core is fully charged
-  const ddosBtn=(g.ddosAvailable&&!g.myDdosUsed)
-    ?`<button class="btn btn-magenta btn-sm" style="grid-column:1/-1" onclick="send('trigger_ddos')" title="Ação gratuita — saqueia o Núcleo!">☢️ Ataque DDoS (+₵${g.core?.crypto||0})</button>`:'';
+  // DDoS contest button — shown when core is charged and player hasn't used DDoS yet
+  const canDDoS=g.ddosAvailable&&!g.myDdosUsed;
 
   if(myTurn&&(g.phase==='action'||g.phase==='forced_global_breach')){
     const forced=g.phase==='forced_global_breach';
@@ -1047,7 +1055,6 @@ function renderActions(g,me){
     }else{
       h+=`<button class="btn btn-secondary btn-sm" style="grid-column:1/-1;opacity:.4;cursor:not-allowed" disabled title="Precisa de ₵7 para executar">💥 Global Breach ₵7 — faltam ₵${7-me.crypto}</button>`;
     }
-    h+=ddosBtn;
     h+='</div>';
     h+=`<div style="font-family:'Share Tech Mono',monospace;font-size:.52rem;color:var(--dim);margin-top:4px;text-align:center;opacity:.6">🎭 você pode blefar qualquer carta</div>`;
     el.innerHTML+=h;return;
@@ -1071,21 +1078,26 @@ function renderActions(g,me){
     el.innerHTML+=`<div class="alert-box alert-warn">⚡ ${esc(actor?.nick||'?')} → ${actName(act.type)}</div>`;
     let h='<div class="ag"><button class="btn btn-secondary btn-sm" onclick="respond(\'pass\')">✓ Passar</button>'+(g.phase!=='block'?'<button class="btn btn-danger btn-sm" onclick="respond(\'contest\')">⚠️ Duvidar!</button>':'');
     bcs.forEach(c=>{h+=`<button class="btn btn-gold btn-sm" onclick="respond('block','${c}')" title="Declara ${c} para bloquear — pode blefar!">🛡️ Bloquear [${c}]</button>`});
-    h+=ddosBtn;
+    if(canDDoS&&g.phase!=='block'){
+      h+=`<button class="btn btn-magenta btn-sm" style="grid-column:1/-1" onclick="respondDDoS()" title="☢️ Duvidar com DDoS — perdedor é eliminado completamente!">☢️ DDoS + Duvidar! (elimina perdedor)</button>`;
+    }
     h+=`</div><div id="respondCountdown" style="font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim);text-align:center;margin-top:3px">auto-passa em 15s</div>`;
     el.innerHTML+=h;return;
   }
   if(myTurn&&g.phase==='contest_block'){
     const bl=g.players.find(p=>p.id===g.pendingBlock?.blockerId);
-    el.innerHTML=`<div class="alert-box alert-warn">🛡️ ${esc(bl?.nick||'?')} bloqueou [${g.pendingBlock?.card}]</div>
+    let h=`<div class="alert-box alert-warn">🛡️ ${esc(bl?.nick||'?')} bloqueou [${g.pendingBlock?.card}]</div>
       <div class="ag"><button class="btn btn-secondary btn-sm" onclick="send('game_respond_block',{type:'pass'})">✓ Aceitar</button>
-      <button class="btn btn-danger btn-sm" onclick="send('game_respond_block',{type:'contest'})">⚠️ Contestar</button>
-      ${ddosBtn}</div>`;return;
+      <button class="btn btn-danger btn-sm" onclick="send('game_respond_block',{type:'contest'})">⚠️ Contestar</button>`;
+    if(canDDoS){
+      h+=`<button class="btn btn-magenta btn-sm" style="grid-column:1/-1" onclick="send('game_respond_block',{type:'contest',useDDoS:true})" title="☢️ Contestar com DDoS — perdedor é eliminado!">☢️ DDoS + Contestar!</button>`;
+    }
+    h+=`</div>`;
+    el.innerHTML=h;return;
   }
   if(!myTurn&&!waiting){
     const curr=g.players.find(p=>p.id===g.currentPlayerId);
     el.innerHTML=`<div class="alert-box alert-wait">Aguardando ${esc(curr?.nick||'?')}…</div>`;
-    if(ddosBtn)el.innerHTML+=`<div class="ag">${ddosBtn}</div>`;
   }
 }
 
@@ -1225,6 +1237,11 @@ function respond(t,c=null){
   // Clear auto-pass timer on any manual or auto response
   clearTimeout(respondAutoPassTimer);respondAutoPassTimer=null;respondTimerKey=null;
   send('game_respond',c?{type:t,card:c}:{type:t});
+}
+function respondDDoS(){
+  // DDoS + Contest — escalated contestation
+  clearTimeout(respondAutoPassTimer);respondAutoPassTimer=null;respondTimerKey=null;
+  send('game_respond',{type:'contest',useDDoS:true});
 }
 let snifferSelectedDeck=null,snifferSelectedHand=null;
 function showSnifferModal(topCards){

@@ -86,7 +86,7 @@ function createGame(roomId, players) {
     discardPile: [],
     eliminatedCards: [], // life cards that have been revealed/lost
     core: { charges: 0, maxCharges, crypto: 0, enabled: coreEnabled },
-    currentPlayerIndex: 0,
+    currentPlayerIndex: Math.floor(Math.random() * n),
     phase: 'action',
     turnNumber: 0,
     pendingAction: null,
@@ -288,8 +288,16 @@ function respondToAction(game, playerId, response) {
     if (game.phase === 'block' && game.pendingAction?.type === 'foreign_aid') {
       return { error: 'Ajuda Externa não pode ser contestada, apenas bloqueada' };
     }
+    // DDoS escalation — optionally attached to the contest
+    const isDDoS = response.useDDoS === true;
+    if (isDDoS) {
+      if (!game.ddosAvailable) return { error: 'DDoS não disponível' };
+      if ((game.ddosUsedBy || []).includes(playerId)) return { error: 'Você já usou o DDoS nesta partida' };
+      if (!game.ddosUsedBy) game.ddosUsedBy = [];
+      game.ddosUsedBy.push(playerId);
+    }
     // Challenge the actor's claimed card
-    startContest(game, playerId, game.pendingAction.actorId, game.pendingAction.card, 'action');
+    startContest(game, playerId, game.pendingAction.actorId, game.pendingAction.card, 'action', isDDoS);
     return { ok: true };
   }
 
@@ -309,31 +317,53 @@ function respondToBlock(game, playerId, response) {
   }
 
   if (response.type === 'contest') {
-    // Actor contests the block
-    startContest(game, playerId, game.pendingBlock.blockerId, game.pendingBlock.card, 'block');
+    // Actor contests the block — optionally with DDoS
+    const isDDoS = response.useDDoS === true;
+    if (isDDoS) {
+      if (!game.ddosAvailable) return { error: 'DDoS não disponível' };
+      if ((game.ddosUsedBy || []).includes(playerId)) return { error: 'Você já usou o DDoS nesta partida' };
+      if (!game.ddosUsedBy) game.ddosUsedBy = [];
+      game.ddosUsedBy.push(playerId);
+    }
+    startContest(game, playerId, game.pendingBlock.blockerId, game.pendingBlock.card, 'block', isDDoS);
     return { ok: true };
   }
 
   return { error: 'Resposta inválida' };
 }
 
-function startContest(game, contesterId, targetId, claimedCard, contestType) {
-  game.pendingContest = { contesterId, targetId, claimedCard, contestType };
+function startContest(game, contesterId, targetId, claimedCard, contestType, isDDoS = false) {
+  game.pendingContest = { contesterId, targetId, claimedCard, contestType, isDDoS };
   game.phase = 'resolving_contest';
 
   const contester = game.players.find(p => p.id === contesterId);
   const target = game.players.find(p => p.id === targetId);
 
+  if (isDDoS) {
+    game.log.push(`☢️ ${contester.nick} ativa PROTOCOLO DDoS na contestação!`);
+  }
+
   // Check if target actually has the claimed card
   const hasCard = target.hand.includes(claimedCard);
 
   if (hasCard) {
-    // Target was honest — contester loses a life (penalty coin just disappears, not to core)
-    game.log.push(`✅ ${target.nick} prova [${claimedCard}]! ${contester.nick} perde 1 vida.`);
+    // Target was honest — contester loses
     game.lastReveal = { playerId: target.id, nick: target.nick, card: claimedCard };
-    loseLife(game, contester);
-    // Deduct penalty coin from player (does NOT go to core)
-    if (contester.crypto > 0) contester.crypto -= 1;
+
+    if (isDDoS) {
+      game.log.push(`✅ ${target.nick} prova [${claimedCard}]! ☢️ ${contester.nick} é ELIMINADO pelo DDoS!`);
+      eliminatePlayerDDoS(game, contester);
+      // Winner collects core crypto
+      const pot = game.core.crypto;
+      target.crypto += pot;
+      if (pot > 0) game.log.push(`☢️ ${target.nick} coleta ₵${pot} do Núcleo!`);
+      resetCore(game);
+    } else {
+      game.log.push(`✅ ${target.nick} prova [${claimedCard}]! ${contester.nick} perde 1 vida.`);
+      loseLife(game, contester);
+      // Deduct penalty coin from player (does NOT go to core)
+      if (contester.crypto > 0) contester.crypto -= 1;
+    }
 
     // Target shuffles card back and draws new one
     const cardIdx = target.hand.indexOf(claimedCard);
@@ -349,10 +379,20 @@ function startContest(game, contesterId, targetId, claimedCard, contestType) {
       resolveAction(game);
     }
   } else {
-    // Target was lying — target loses a life (penalty coin disappears, not to core)
-    game.log.push(`❌ ${target.nick} estava mentindo! Perde 1 vida.`);
-    loseLife(game, target);
-    if (target.crypto > 0) target.crypto -= 1;
+    // Target was lying — target loses
+    if (isDDoS) {
+      game.log.push(`❌ ${target.nick} estava mentindo! ☢️ ${target.nick} é ELIMINADO pelo DDoS!`);
+      eliminatePlayerDDoS(game, target);
+      // Winner (contester) collects core crypto
+      const pot = game.core.crypto;
+      contester.crypto += pot;
+      if (pot > 0) game.log.push(`☢️ ${contester.nick} coleta ₵${pot} do Núcleo!`);
+      resetCore(game);
+    } else {
+      game.log.push(`❌ ${target.nick} estava mentindo! Perde 1 vida.`);
+      loseLife(game, target);
+      if (target.crypto > 0) target.crypto -= 1;
+    }
 
     if (contestType === 'block') {
       resolveAction(game);
@@ -375,7 +415,7 @@ function loseLife(game, player) {
   player.livesRevealed[lifeIdx] = true;
   const card = player.lives[lifeIdx];
   game.eliminatedCards.push(card);
-  game.log.push(`💀 ${player.nick} perdeu 1 carta do deck: [${card}]!`);
+  game.log.push(`💀 ${player.nick} perdeu 1 vida: [${card}]!`);
 
   // Every life lost charges the core by 1 (capped at maxCharges)
   if (game.core.enabled !== false) {
@@ -387,6 +427,28 @@ function loseLife(game, player) {
   if (player.livesRevealed.every(r => r)) {
     eliminatePlayer(game, player);
   }
+}
+
+function eliminatePlayerDDoS(game, player) {
+  // DDoS elimination — reveal ALL remaining lives, crypto goes to bank
+  for (let i = 0; i < player.livesRevealed.length; i++) {
+    if (!player.livesRevealed[i]) {
+      player.livesRevealed[i] = true;
+      if (player.lives[i]) {
+        game.eliminatedCards.push(player.lives[i]);
+      }
+    }
+  }
+  player.crypto = 0;
+  player.eliminated = true;
+  game.log.push(`☠️ ${player.nick} foi DESCONECTADO da rede pelo DDoS!`);
+  checkWin(game);
+}
+
+function resetCore(game) {
+  game.core.crypto = 0;
+  game.core.charges = 0;
+  game.ddosAvailable = false;
 }
 
 function eliminatePlayer(game, player) {
@@ -488,27 +550,9 @@ function resolveSnifferChoice(game, playerId, choice) {
 }
 
 function triggerDDoS(game, triggererId) {
-  if (!game.ddosAvailable) return { error: 'DDoS não disponível' };
-  if ((game.ddosUsedBy || []).includes(triggererId)) return { error: 'Você já usou o DDoS nesta partida' };
-
-  const triggerer = game.players.find(p => p.id === triggererId);
-  if (!triggerer || triggerer.eliminated) return { error: 'Jogador inválido' };
-
-  const pot = game.core.crypto;
-  triggerer.crypto += pot;
-  game.log.push(`☢️ ${triggerer.nick} ativa ATAQUE DDoS — saqueia o Núcleo: +₵${pot}!`);
-
-  // Mark player as having used DDoS
-  if (!game.ddosUsedBy) game.ddosUsedBy = [];
-  game.ddosUsedBy.push(triggererId);
-
-  // Reset core
-  game.core.crypto = 0;
-  game.core.charges = 0;
-  game.ddosAvailable = false;
-
-  // DDoS is a free action — game phase/turn continues unchanged
-  return { ok: true };
+  // DDoS is now activated as part of a contestation (Duvidar + DDoS).
+  // Standalone trigger is no longer supported.
+  return { error: 'DDoS agora é ativado junto com uma contestação (Duvidar + DDoS)' };
 }
 
 // ─── SANITIZE FOR CLIENT ────────────────────────────────────────────────────
@@ -533,7 +577,7 @@ function getStateForPlayer(game, playerId) {
     pendingBlock: game.pendingBlock,
     waitingFor: game.waitingFor,
     winner: game.winner,
-    log: game.log.slice(-20),
+    log: game.log,
     deckSize: game.deck.length,
     eliminatedCards: game.eliminatedCards || [],
     players: game.players.map(p => ({

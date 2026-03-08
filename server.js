@@ -385,7 +385,7 @@ function botRoomTick(roomId) {
     } else if (g.phase === 'contest_block') {
       const actorId = g.pendingAction?.actorId;
       if (actorId && g.waitingFor.includes(actorId) && isBotId(actorId)) {
-        const resp = botLogic.pickBlockResponse(difficulty);
+        const resp = botLogic.pickBlockResponse(difficulty, g, actorId);
         const r = game.respondToBlock(g, actorId, resp);
         if (r?.error) game.respondToBlock(g, actorId, { type: 'pass' });
         progress = true;
@@ -526,7 +526,7 @@ function simTick(simId) {
     } else if (g.phase === 'contest_block') {
       const actorId = g.pendingAction?.actorId;
       if (actorId && g.waitingFor.includes(actorId)) {
-        const resp = botLogic.pickBlockResponse();
+        const resp = botLogic.pickBlockResponse('normal', g, actorId);
         const r = game.respondToBlock(g, actorId, resp);
         if (r?.error) game.respondToBlock(g, actorId, { type: 'pass' });
         progress = true;

@@ -106,11 +106,12 @@ function pickResponse(game, playerId, difficulty = 'normal') {
   if (!action) return { type: 'pass' };
 
   const canBlock = BLOCK_MAP[action.type] || [];
+  const canDDoS = game.ddosAvailable && !(game.ddosUsedBy || []).includes(playerId);
   const r = Math.random();
 
   if (difficulty === 'easy') {
     // Easy: almost always passes, rarely blocks, never contests
-    if (r < 0.05) return { type: 'contest' };
+    if (r < 0.05) return { type: 'contest', useDDoS: canDDoS && Math.random() < 0.05 };
     if (r < 0.13 && canBlock.length > 0) {
       const card = canBlock[Math.floor(Math.random() * canBlock.length)];
       return { type: 'block', card };
@@ -120,7 +121,7 @@ function pickResponse(game, playerId, difficulty = 'normal') {
 
   if (difficulty === 'hard') {
     // Hard: contests more often, blocks aggressively when possible
-    if (r < 0.28) return { type: 'contest' };
+    if (r < 0.28) return { type: 'contest', useDDoS: canDDoS && Math.random() < 0.50 };
     if (r < 0.72 && canBlock.length > 0) {
       const card = canBlock[Math.floor(Math.random() * canBlock.length)];
       return { type: 'block', card };
@@ -129,7 +130,7 @@ function pickResponse(game, playerId, difficulty = 'normal') {
   }
 
   // Normal: ~15% contest, ~25% block, ~60% pass
-  if (r < 0.15) return { type: 'contest' };
+  if (r < 0.15) return { type: 'contest', useDDoS: canDDoS && Math.random() < 0.20 };
   if (r < 0.40 && canBlock.length > 0) {
     const card = canBlock[Math.floor(Math.random() * canBlock.length)];
     return { type: 'block', card };
@@ -138,11 +139,12 @@ function pickResponse(game, playerId, difficulty = 'normal') {
 }
 
 // Actor responds to a block
-function pickBlockResponse(difficulty = 'normal') {
-  if (difficulty === 'easy')   return Math.random() < 0.10 ? { type: 'contest' } : { type: 'pass' };
-  if (difficulty === 'hard')   return Math.random() < 0.58 ? { type: 'contest' } : { type: 'pass' };
+function pickBlockResponse(difficulty = 'normal', game = null, playerId = null) {
+  const canDDoS = game && game.ddosAvailable && !(game.ddosUsedBy || []).includes(playerId);
+  if (difficulty === 'easy')   return Math.random() < 0.10 ? { type: 'contest', useDDoS: canDDoS && Math.random() < 0.05 } : { type: 'pass' };
+  if (difficulty === 'hard')   return Math.random() < 0.58 ? { type: 'contest', useDDoS: canDDoS && Math.random() < 0.50 } : { type: 'pass' };
   // Normal: ~35% contest
-  return Math.random() < 0.35 ? { type: 'contest' } : { type: 'pass' };
+  return Math.random() < 0.35 ? { type: 'contest', useDDoS: canDDoS && Math.random() < 0.20 } : { type: 'pass' };
 }
 
 // ── SNIFFER PICKER ────────────────────────────────────────────────────────────
