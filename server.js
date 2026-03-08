@@ -301,7 +301,7 @@ function autoPassTurn(roomId, playerId) {
       });
     }
   } else if (gameState.phase === 'sniffer_choice') {
-    // Sniffer choice timed out — auto-resolve with no swap (+₵1 bonus)
+    // Sniffer choice timed out — auto-resolve with no swap (resolveSnifferChoice grants +₵1)
     const actorId = gameState.pendingAction?.actorId;
     if (actorId && gameState.waitingFor.includes(actorId)) {
       game.resolveSnifferChoice(gameState, actorId, { swap: false });
