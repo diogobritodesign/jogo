@@ -41,14 +41,7 @@
 
 ### 3.1 Cartas
 
-O deck contém **5 tipos de carta** com cópias suficientes para o número de jogadores:
-
-- **2–3 jogadores:** 3 cópias × 5 tipos = **15 cartas**
-- **4 jogadores:** 4 cópias × 5 tipos = **20 cartas**
-- **5 jogadores:** 5 cópias × 5 tipos = **25 cartas**
-- **6 jogadores:** 6 cópias × 5 tipos = **30 cartas**
-
-Fórmula: `copiesPerCard = max(3, numPlayers)` — garante que o deck sempre comporte 4 cartas por jogador (2 mão + 2 vidas) com sobra para trocas em contestações.
+O deck contém **15 cartas** fixas — 3 cópias de cada um dos 5 tipos, independente do número de jogadores:
 
 | Carta | Ação Associada | Bloqueio |
 |---|---|---|
@@ -60,7 +53,8 @@ Fórmula: `copiesPerCard = max(3, numPlayers)` — garante que o deck sempre com
 
 ### 3.2 Setup Inicial
 
-- Cada jogador recebe **2 cartas de mão** (hand) + **2 cartas de vida** (lives), todas do deck embaralhado.
+- Cada jogador recebe **2 cartas** do deck embaralhado. Essas 2 cartas servem simultaneamente como **mão** (para blefar/provar ações) e como **vidas** (perder uma vida = revelar e perder uma carta).
+- Com 6 jogadores: 6 × 2 = 12 cartas distribuídas, **3 cartas restantes** no deck.
 - Cada jogador começa com **₵2** (crypto).
 - O deck é embaralhado com Fisher-Yates, rejeitando distribuições com muitos pares adjacentes (máx. 2 pares).
 - O primeiro jogador é selecionado aleatoriamente.
@@ -289,9 +283,9 @@ Jogador Ativo                    Server                     Outros Jogadores
 | Parâmetro | Valor |
 |---|---|
 | Jogadores por sala | 2–6 |
-| Cartas no deck | `max(3, N) × 5` onde N = nº de jogadores |
-| Cartas de mão | 2 por jogador |
-| Vidas | 2 por jogador |
+| Cartas no deck | 15 (3 cópias × 5 tipos, sempre) |
+| Cartas por jogador | 2 (servem como mão e vidas) |
+| Vidas | 2 por jogador (= as 2 cartas) |
 | Crypto inicial | ₵2 |
 | Custo Global Breach | ₵7 |
 | Rastro Digital (Global Breach obrigatório) | ₵10+ |
@@ -336,7 +330,7 @@ Jogador Ativo                    Server                     Outros Jogadores
 | DDoS não disponível/já usado | `respondToAction()`, `respondToBlock()` | Retorna `{error}` |
 | Null safety: ator/alvo não encontrado na resolução | `resolveAction()`, `startContest()` | Avança turno sem crash |
 | Jogo já finalizado durante resolução | `nextTurn()` | Early return — impede que `advanceTurn()` sobrescreva `phase='ended'` |
-| Deck vazio durante compra | `drawCard()` | Retorna `null` (safety fallback; o deck é dimensionado para nunca esvaziar) |
+| Deck vazio durante compra | `drawCard()` | Retorna `null` (safety fallback; com 15 cartas fixas e trocas net-zero, o deck não esvazia) |
 | Fase incorreta | `resolveSnifferChoice()`, `respondToBlock()` | Retorna `{error}` |
 
 ### 6.2 Validações no `server.js`
@@ -371,8 +365,9 @@ Jogador Ativo                    Server                     Outros Jogadores
 ### 6.4 Proteção contra Travamentos
 
 - **Guarda de fim de jogo em `nextTurn()`:** Se `game.phase === 'ended'` (definido por `checkWin()` durante eliminação), `nextTurn()` retorna imediatamente sem chamar `advanceTurn()`. Isso impede que o estado `'ended'` seja sobrescrito por `'action'`, o que causava o travamento do jogo na última mão.
-- **Deck dimensionado por número de jogadores:** O deck é criado com `max(3, N)` cópias de cada tipo, onde N = número de jogadores. Isso garante cartas suficientes (4 por jogador + buffer) e elimina a necessidade de recriar o deck durante a partida.
-- **Deck vazio (fallback):** `drawCard()` retorna `null` se o deck estiver vazio (não recria um deck novo, o que causava cartas duplicadas e contagem errada).
+- **Deck fixo de 15 cartas:** O deck sempre tem 15 cartas (3 de cada tipo). Cada jogador recebe 2 cartas que servem como mão e vidas. Com 6 jogadores: 12 distribuídas, 3 no deck.
+- **Mão e vidas sincronizadas:** Ao perder uma vida, a carta é removida da mão. Ao trocar uma carta (contestação/sniffer), a vida correspondente é atualizada.
+- **Deck vazio (fallback):** `drawCard()` retorna `null` se o deck estiver vazio.
 - **Sniffer com deck vazio:** Concede +₵1 ao invés de travar.
 - **Bot com ação inválida:** Fallback automático para `income`.
 - **Simulação travada:** Após 8 ticks sem progresso, força `income` e reinicia contagem.
@@ -388,11 +383,11 @@ Jogador Ativo                    Server                     Outros Jogadores
 
 | Função | Descrição |
 |---|---|
-| `createDeck(copiesPerCard)` | Cria deck embaralhado com `copiesPerCard` cópias de cada tipo (Fisher-Yates com rejeição de clustering) |
+| `createDeck()` | Cria deck de 15 cartas embaralhado (Fisher-Yates com rejeição de clustering) |
 | `createPlayer(id, nick)` | Cria objeto jogador com estado inicial |
-| `dealInitialCards(game)` | Distribui 2 cartas de mão + 2 vidas para cada jogador |
+| `dealInitialCards(game)` | Distribui 2 cartas por jogador (mesmas cartas servem como mão e vidas) |
 | `drawCard(game)` | Compra 1 carta do topo do deck (retorna `null` se vazio — safety fallback) |
-| `createGame(roomId, players)` | Inicializa estado completo do jogo, dimensiona deck para nº de jogadores |
+| `createGame(roomId, players)` | Inicializa estado completo do jogo com deck fixo de 15 cartas |
 | `advanceTurn(game)` | Reseta fases, verifica DDoS, loga turno |
 | `currentPlayer(game)` | Retorna jogador do turno atual |
 | `nextTurn(game)` | Avança para o próximo jogador não-eliminado; **retorna imediatamente se `phase='ended'`** |
@@ -402,8 +397,8 @@ Jogador Ativo                    Server                     Outros Jogadores
 | `respondToAction(game, playerId, response)` | Processa resposta (pass/block/contest) a uma ação |
 | `respondToBlock(game, playerId, response)` | Processa resposta do ator a um bloqueio |
 | `startContest(game, contesterId, targetId, claimedCard, contestType, isDDoS)` | Resolve uma contestação (com ou sem DDoS) |
-| `loseLife(game, player)` | Remove 1 vida do jogador, carrega Núcleo |
-| `eliminatePlayerDDoS(game, player)` | Eliminação total por DDoS |
+| `loseLife(game, player)` | Remove 1 vida do jogador, remove carta da mão, carrega Núcleo |
+| `eliminatePlayerDDoS(game, player)` | Eliminação total por DDoS, limpa mão |
 | `eliminatePlayer(game, player)` | Eliminação padrão (ambas vidas perdidas) |
 | `resetCore(game)` | Reseta cargas e crypto do Núcleo |
 | `checkDDoS(game)` | Atualiza flag `ddosAvailable` |

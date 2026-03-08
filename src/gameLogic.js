@@ -1,7 +1,7 @@
 'use strict';
 
 const CARDS = ['Admin', 'Trojan', 'Firewall', 'Phisher', 'Sniffer'];
-const BASE_COPIES_PER_CARD = 3; // minimum copies of each card type
+const DECK_SIZE = 15; // always 3 of each card type
 
 // Maximum number of adjacent same-type pairs tolerated before reshuffling.
 // With 15 cards (3×5 types), a pure Fisher-Yates shuffle produces ~2 such pairs
@@ -12,21 +12,17 @@ const MAX_ADJACENT_PAIRS = 2;
 // P(accept on first try) ≈ 62 %, so 8 attempts succeeds in > 99.9 % of calls.
 const MAX_SHUFFLE_ATTEMPTS = 8;
 
-function createDeck(copiesPerCard = BASE_COPIES_PER_CARD) {
+function createDeck() {
   const base = [];
   for (const card of CARDS) {
-    for (let i = 0; i < copiesPerCard; i++) base.push(card);
+    base.push(card, card, card); // 3 of each = 15 total
   }
-  // Scale the clustering threshold with deck size.
-  // For 15 cards the expected adjacent pairs ≈ 2; for larger decks allow more.
-  // Dividing by 6 keeps the ratio ≈ 1 pair per 6 cards (15/6≈2, 20/6≈3, 30/6=5).
-  const maxPairs = Math.max(MAX_ADJACENT_PAIRS, Math.floor(base.length / 6));
   let deck;
   let attempts = 0;
   do {
     deck = shuffle(base);
     attempts++;
-  } while (attempts < MAX_SHUFFLE_ATTEMPTS && countAdjacentPairs(deck) > maxPairs);
+  } while (attempts < MAX_SHUFFLE_ATTEMPTS && countAdjacentPairs(deck) > MAX_ADJACENT_PAIRS);
   return deck;
 }
 
@@ -58,21 +54,16 @@ function createPlayer(id, nick) {
 
 function dealInitialCards(game) {
   for (const player of game.players) {
-    // Draw 2 cards for hand
-    player.hand = [drawCard(game), drawCard(game)];
-    // Draw 2 cards for lives (face-down)
-    player.lives[0] = drawCard(game);
-    player.lives[1] = drawCard(game);
+    // Draw 2 cards — they serve as both hand (for bluffing) and lives.
+    const card1 = drawCard(game);
+    const card2 = drawCard(game);
+    player.hand = [card1, card2];
+    player.lives = [card1, card2];
   }
 }
 
 function drawCard(game) {
-  if (game.deck.length === 0) {
-    // Deck should never run out — it is sized for the player count at game
-    // creation.  Returning null here is a safety fallback; callers that add
-    // a card before drawing (e.g. contest card-swap) will still work.
-    return null;
-  }
+  if (game.deck.length === 0) return null; // safety fallback
   return game.deck.pop();
 }
 
@@ -83,16 +74,10 @@ function createGame(roomId, players) {
   const coreEnabled = n >= 3;
   const maxCharges = n >= 5 ? 4 : 3;
 
-  // Each player needs 4 cards (2 hand + 2 lives).  The deck must hold at
-  // least 4·n cards.  With 5 card types, copiesPerCard = n gives exactly
-  // 5·n cards → 5·n − 4·n = n cards remaining in the deck after the deal,
-  // which is enough for contest card-swaps (net-zero: 1 added, 1 drawn).
-  const copiesPerCard = Math.max(BASE_COPIES_PER_CARD, n);
-
   const game = {
     roomId,
     players: players.map(p => createPlayer(p.id, p.nick)),
-    deck: createDeck(copiesPerCard),
+    deck: createDeck(),
     discardPile: [],
     eliminatedCards: [], // life cards that have been revealed/lost
     core: { charges: 0, maxCharges, crypto: 0, enabled: coreEnabled },
@@ -393,7 +378,11 @@ function startContest(game, contesterId, targetId, claimedCard, contestType, isD
     target.hand.splice(cardIdx, 1);
     game.deck.push(claimedCard);
     game.deck = shuffle(game.deck);
-    target.hand.push(drawCard(game));
+    const newCard = drawCard(game);
+    target.hand.push(newCard);
+    // Keep lives in sync — update the matching unrevealed life card
+    const lifeSwapIdx = target.lives.findIndex((c, i) => c === claimedCard && !target.livesRevealed[i]);
+    if (lifeSwapIdx !== -1) target.lives[lifeSwapIdx] = newCard;
 
     if (contestType === 'block') {
       game.log.push(`🛡️ Bloqueio confirmado. Ação cancelada.`);
@@ -438,6 +427,9 @@ function loseLife(game, player) {
   player.livesRevealed[lifeIdx] = true;
   const card = player.lives[lifeIdx];
   game.eliminatedCards.push(card);
+  // Remove the lost card from hand (no longer usable for bluffing)
+  const handIdx = player.hand.indexOf(card);
+  if (handIdx !== -1) player.hand.splice(handIdx, 1);
   game.log.push(`💀 ${player.nick} perdeu 1 vida: [${card}]!`);
 
   // Every life lost charges the core by 1 (capped at maxCharges)
@@ -462,6 +454,7 @@ function eliminatePlayerDDoS(game, player) {
       }
     }
   }
+  player.hand = []; // clear hand — all cards are now revealed/eliminated
   player.crypto = 0;
   player.eliminated = true;
   game.log.push(`☠️ ${player.nick} foi DESCONECTADO da rede pelo DDoS!`);
@@ -553,17 +546,20 @@ function resolveSnifferChoice(game, playerId, choice) {
       const safeHandIdx = handIdx < actor.hand.length ? handIdx : 0;
 
       const deckCard = topCards[Math.min(deckIdx, topCards.length - 1)];
-      const handCard = actor.hand[safeHandIdx];
 
       // Remove chosen deck card (index 1 = last element, index 0 = second-to-last)
       if (deckIdx === 1) game.deck.pop();
       else game.deck.splice(game.deck.length - 2, 1);
 
       // Swap: replace the chosen hand card with the deck card
+      const oldHandCard = actor.hand[safeHandIdx];
       actor.hand[safeHandIdx] = deckCard;
-      game.deck.push(handCard);
+      game.deck.push(oldHandCard);
       game.deck = shuffle(game.deck);
-      game.log.push(`🔍 ${actor.nick} trocou [${handCard}] pelo [${deckCard}] do deck.`);
+      // Keep lives in sync — update the matching unrevealed life card
+      const lifeSwapIdx = actor.lives.findIndex((c, i) => c === oldHandCard && !actor.livesRevealed[i]);
+      if (lifeSwapIdx !== -1) actor.lives[lifeSwapIdx] = deckCard;
+      game.log.push(`🔍 ${actor.nick} trocou [${oldHandCard}] pelo [${deckCard}] do deck.`);
     }
   } else {
     // No swap — gain ₵1 bonus (Otimização)

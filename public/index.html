@@ -412,7 +412,7 @@ input[type=range]{width:100%;accent-color:var(--cyan);cursor:pointer}
         <div class="core-val" id="coreVal">₵0</div>
       </div>
       <div class="ddos-tag" id="ddosTag">☢ DDoS</div>
-      <div class="deck-lbl" id="deckLbl" title="Baralho: 15 cartas no total (3 de cada), 4 cartas por jogador são distribuídas no início" style="cursor:help">DECK:0</div>
+      <div class="deck-lbl" id="deckLbl" title="Baralho: 15 cartas no total (3 de cada), 2 cartas por jogador são distribuídas no início" style="cursor:help">DECK:0</div>
       <div class="deck-lbl" id="matchTimer" style="color:var(--dim)">⏱ 0:00</div>
       <div class="phase-lbl" id="phaseLbl">—</div>
       <button class="tb-btn" id="extendTurnBtn" onclick="doExtendTurn()" style="display:none;color:var(--gold);border-color:rgba(255,214,0,.35)" title="Pagar ₵1 para adicionar 30s ao seu turno">+30s ₵1</button>
@@ -925,7 +925,7 @@ function renderGame(){
   // Show deck count with total context: "DECK: 7/15"
   const deckEl = document.getElementById('deckLbl');
   deckEl.textContent=`DECK: ${g.deckSize}/15`;
-  deckEl.title=`Baralho: ${g.deckSize} cartas restantes de 15 total (3 de cada tipo). Cada jogador recebeu 4 cartas no início.`;
+  deckEl.title=`Baralho: ${g.deckSize} cartas restantes de 15 total (3 de cada tipo). Cada jogador recebeu 2 cartas no início.`;
   document.getElementById('ddosTag').classList.toggle('on',g.ddosAvailable);
   document.getElementById('phaseLbl').textContent=PH[g.phase]||g.phase.toUpperCase();
 
