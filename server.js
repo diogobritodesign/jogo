@@ -304,7 +304,7 @@ function autoPassTurn(roomId, playerId) {
     const result = game.autoPassWaiting(gameState, playerId);
     if (!result?.error) checkGameEnd(roomId, gameState);
   }
-  checkGameEnd(roomId, gameState);
+  if (gameState.phase !== 'ended') checkGameEnd(roomId, gameState);
   turnTimers.delete(roomId);
   if (gameState.phase !== 'ended') {
     const nextId = getGameCurrentPlayerId(gameState);
@@ -786,7 +786,7 @@ wss.on('connection', (ws) => {
           startTurnTimer(info.roomId, getGameCurrentPlayerId(g), ms);
         }
         broadcastGameState(info.roomId);
-        if (g.phase!=='ended') scheduleBotTick(info.roomId);
+        if (g.phase!=='ended' && botRooms.has(info.roomId)) scheduleBotTick(info.roomId);
         break;
       }
 
@@ -815,7 +815,7 @@ wss.on('connection', (ws) => {
           startTurnTimer(info.roomId, getGameCurrentPlayerId(g), ms);
         }
         broadcastGameState(info.roomId);
-        if (g.phase!=='ended') scheduleBotTick(info.roomId);
+        if (g.phase!=='ended' && botRooms.has(info.roomId)) scheduleBotTick(info.roomId);
         break;
       }
 
@@ -834,7 +834,7 @@ wss.on('connection', (ws) => {
           startTurnTimer(info.roomId, getGameCurrentPlayerId(g), ms);
         }
         broadcastGameState(info.roomId);
-        if (g.phase!=='ended') scheduleBotTick(info.roomId);
+        if (g.phase!=='ended' && botRooms.has(info.roomId)) scheduleBotTick(info.roomId);
         break;
       }
 
@@ -848,7 +848,7 @@ wss.on('connection', (ws) => {
         clearTurnTimer(info.roomId);
         if (g.phase!=='ended') startTurnTimer(info.roomId, getGameCurrentPlayerId(g));
         broadcastGameState(info.roomId);
-        if (g.phase!=='ended') scheduleBotTick(info.roomId);
+        if (g.phase!=='ended' && botRooms.has(info.roomId)) scheduleBotTick(info.roomId);
         break;
       }
 
@@ -863,7 +863,7 @@ wss.on('connection', (ws) => {
         checkGameEnd(info.roomId, g);
         if (g.phase!=='ended') startTurnTimer(info.roomId, getGameCurrentPlayerId(g));
         broadcastGameState(info.roomId);
-        if (g.phase!=='ended') scheduleBotTick(info.roomId);
+        if (g.phase!=='ended' && botRooms.has(info.roomId)) scheduleBotTick(info.roomId);
         break;
       }
 

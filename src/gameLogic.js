@@ -339,6 +339,12 @@ function startContest(game, contesterId, targetId, claimedCard, contestType, isD
   const contester = game.players.find(p => p.id === contesterId);
   const target = game.players.find(p => p.id === targetId);
 
+  if (!contester || !target) {
+    game.log.push('⚠️ Erro: jogador não encontrado na contestação.');
+    nextTurn(game);
+    return;
+  }
+
   if (isDDoS) {
     game.log.push(`☢️ ${contester.nick} ativa PROTOCOLO DDoS na contestação!`);
   }
@@ -467,6 +473,7 @@ function resolveAction(game) {
   if (!action) { nextTurn(game); return; }
 
   const actor = game.players.find(p => p.id === action.actorId);
+  if (!actor) { nextTurn(game); return; }
 
   switch (action.type) {
     case 'foreign_aid': {
@@ -480,14 +487,16 @@ function resolveAction(game) {
       break;
     }
     case 'injection': {
-      actor.crypto -= action.cost;
       const target = game.players.find(p => p.id === action.targetId);
+      if (!target) { break; }
+      actor.crypto -= action.cost;
       game.log.push(`💉 Trojan executado! ${target.nick} perde 1 carta.`);
       loseLife(game, target);
       break;
     }
     case 'intercept': {
       const target = game.players.find(p => p.id === action.targetId);
+      if (!target) { break; }
       const stolen = Math.min(target.crypto, 2);
       target.crypto -= stolen;
       actor.crypto += stolen;
