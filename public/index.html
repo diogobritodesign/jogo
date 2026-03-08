@@ -180,9 +180,9 @@ input[type=range]{width:100%;accent-color:var(--cyan);cursor:pointer}
 .reveal-overlay-lbl{font-family:'Orbitron',monospace;font-size:.42rem;color:#00e676;letter-spacing:.1em;text-transform:uppercase;font-weight:700}
 /* Cards row — prominent at TOP of seat */
 .seat-cards{display:flex;gap:6px;justify-content:center}
-/* Life pips: opponent hidden cards / eliminated revealed cards */
-.life-pip{width:32px;height:46px;border-radius:5px;border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:1.15rem;background:rgba(0,245,255,.04);transition:all .3s}
-.life-pip.dead{background:rgba(255,23,68,.08);border-color:rgba(255,23,68,.38)}
+/* Life pips: opponent hidden cards / eliminated revealed cards (cards ARE lives) */
+.life-pip{width:32px;height:46px;border-radius:5px;border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:1.15rem;background:rgba(0,245,255,.04);transition:all .3s;gap:1px}
+.life-pip.dead{background:rgba(255,23,68,.08);border-color:rgba(255,23,68,.38);opacity:.6;filter:grayscale(.3)}
 /* Info bar — compact dark label BELOW cards */
 .seat-info{background:rgba(2,8,20,.88);border:1px solid var(--border);border-radius:5px;padding:4px 10px;display:flex;gap:8px;align-items:center;justify-content:center;white-space:nowrap;max-width:160px;min-width:90px}
 .seat-wrap.my-turn .seat-info{border-color:var(--cyan);box-shadow:0 0 10px rgba(0,245,255,.2)}
@@ -196,6 +196,10 @@ input[type=range]{width:100%;accent-color:var(--cyan);cursor:pointer}
 .self-hcard{width:50px;height:68px;border-radius:6px;border:1px solid var(--cyan);background:rgba(0,245,255,.08);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;box-shadow:0 0 10px rgba(0,245,255,.12)}
 .self-hcard-icon{font-size:1.9rem;line-height:1}
 .self-hcard-lbl{font-family:'Orbitron',monospace;font-size:.38rem;color:var(--cyan);text-transform:uppercase;letter-spacing:.05em}
+/* Dead card (life lost) — same size as hand card but red/grey, non-interactive */
+.self-hcard.dead{border-color:rgba(255,23,68,.45);background:rgba(255,23,68,.08);box-shadow:0 0 8px rgba(255,23,68,.12);opacity:.55;filter:grayscale(.35);cursor:default;pointer-events:none}
+.self-hcard.dead .self-hcard-icon{opacity:.7}
+.self-hcard.dead .self-hcard-lbl{color:var(--danger);opacity:.7}
 /* Projectile overlay canvas */
 #animCanvas{position:fixed;inset:0;pointer-events:none;z-index:650}
 /* Spectator overlay on my zone */
@@ -983,13 +987,20 @@ function renderOpponents(g,me){
     const canTarget=targetMode!==null&&!opp.eliminated;
     const d=document.createElement('div');d.className='opp-seat';d.dataset.pos=idx;
     const elimCards=opp.eliminated?(opp.livesRevealed.map((r,i)=>r?`<div class="elim-hcard"><span>${IC[opp.lives[i]]||'?'}</span><span class="elim-hcard-lbl">${(opp.lives[i]||'').toUpperCase()}</span></div>`:'').join('')):'';
-    // Life pips (hidden cards for opponents)
-    const pipsHtml=opp.livesRevealed.map((rev,i)=>`<div class="life-pip ${rev?'dead':''}"${rev&&opp.lives[i]?` data-card="${opp.lives[i]}"`:''}>${rev?(opp.lives[i]?IC[opp.lives[i]]:'☠'):'🔒'}</div>`).join('');
+    // Cards display: hidden lives as face-down locks, dead lives as face-up revealed cards
+    const cardsHtml=opp.livesRevealed.map((rev,i)=>{
+      if(rev&&opp.lives[i]){
+        // Dead card — face-up, red, showing the card type (visible to all)
+        return `<div class="life-pip dead" data-card="${opp.lives[i]}" title="${opp.lives[i]} — eliminada"><span style="font-size:.9rem">${IC[opp.lives[i]]}</span><span style="font-family:'Orbitron',monospace;font-size:.28rem;color:rgba(255,100,100,.8);text-transform:uppercase;margin-top:1px">${opp.lives[i]}</span></div>`;
+      }
+      if(rev) return `<div class="life-pip dead">☠</div>`;
+      return `<div class="life-pip">🔒</div>`;
+    }).join('');
     d.innerHTML=`<div class="seat-wrap${isTurn?' my-turn':''}${opp.eliminated?' out':''}${canTarget?' target':''}" id="oppcard-${opp.id}"
       ${canTarget?`onclick="execTarget('${opp.id}')"`:''}
     >${isTurn?'<div class="turn-arr">▼</div>':''}
     ${!opp.connected?'<div class="off-tag">OFFLINE</div>':''}
-    <div class="seat-cards">${pipsHtml}</div>
+    <div class="seat-cards">${cardsHtml}</div>
     <div class="seat-info">
       <div class="opp-nick" style="color:${opp.eliminated?'var(--danger)':isTurn?'var(--cyan)':'var(--text)'}">${esc(opp.nick)}${opp.eliminated?' ☠':''}</div>
       <div class="opp-crypto">${opp.eliminated?'—':'₵'+opp.crypto}</div>
@@ -998,16 +1009,15 @@ function renderOpponents(g,me){
     </div>`;
     ring.appendChild(d);
   });
-  // Self seat — current player appears on the table at the bottom centre, showing their own hand cards + life pips
+  // Self seat — current player appears on the table at the bottom centre, showing their cards (lives are cards)
   if(me){
     const isTurn=g.currentPlayerId===myId;
     const d=document.createElement('div');d.className='opp-seat';d.dataset.pos='self';
-    // Life pips (always shown, same as opponents — dead ones show revealed card in red)
-    const selfLivesHtml=me.livesRevealed.map((rev,i)=>{
-      if(rev){
-        return `<div class="life-pip dead"${me.lives[i]?` data-card="${esc(me.lives[i])}" onclick="openCardInspect('${esc(me.lives[i])}')" style="cursor:zoom-in"`:``}>${me.lives[i]?IC[me.lives[i]]:'☠'}</div>`;
-      }
-      return `<div class="life-pip">🔒</div>`;
+    // Dead life cards — revealed face-up as full-sized dead cards (cards ARE lives; dead = flipped, visible, unusable)
+    const deadLivesHtml=me.livesRevealed.map((rev,i)=>{
+      if(!rev||!me.lives[i]) return '';
+      const c=me.lives[i];
+      return `<div class="self-hcard dead" data-card="${esc(c)}" title="${esc(c)} — eliminada"><div class="self-hcard-icon">${IC[c]||'☠'}</div><div class="self-hcard-lbl">${esc(c)}</div></div>`;
     }).join('');
     // Show actual hand cards (others only see '?' — only self gets real values)
     const handHtml=!me.eliminated&&me.hand&&me.hand.length>0
@@ -1015,7 +1025,7 @@ function renderOpponents(g,me){
       : '';
     d.innerHTML=`<div class="seat-wrap${isTurn?' my-turn':''}${me.eliminated?' out':''}" id="oppcard-self">
       ${isTurn?'<div class="turn-arr">▼</div>':''}
-      <div class="seat-cards">${selfLivesHtml}${handHtml}</div>
+      <div class="seat-cards">${handHtml}${deadLivesHtml}</div>
       <div class="seat-info">
         <div class="opp-nick" style="color:${me.eliminated?'var(--danger)':'var(--cyan)'}">⬡ ${esc(me.nick)}${me.eliminated?' ☠':''}</div>
         <div class="opp-crypto">${me.eliminated?'—':'₵'+me.crypto}</div>
