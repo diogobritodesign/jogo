@@ -200,6 +200,8 @@ input[type=range]{width:100%;accent-color:var(--cyan);cursor:pointer}
 .self-hcard.dead{border-color:rgba(255,23,68,.45);background:rgba(255,23,68,.08);box-shadow:0 0 8px rgba(255,23,68,.12);opacity:.55;filter:grayscale(.35);cursor:default;pointer-events:none}
 .self-hcard.dead .self-hcard-icon{opacity:.7}
 .self-hcard.dead .self-hcard-lbl{color:var(--danger);opacity:.7}
+/* Dead card label for opponent life pips */
+.life-pip-lbl{font-family:'Orbitron',monospace;font-size:.28rem;color:rgba(255,100,100,.8);text-transform:uppercase;margin-top:1px}
 /* Projectile overlay canvas */
 #animCanvas{position:fixed;inset:0;pointer-events:none;z-index:650}
 /* Spectator overlay on my zone */
@@ -991,7 +993,7 @@ function renderOpponents(g,me){
     const cardsHtml=opp.livesRevealed.map((rev,i)=>{
       if(rev&&opp.lives[i]){
         // Dead card — face-up, red, showing the card type (visible to all)
-        return `<div class="life-pip dead" data-card="${opp.lives[i]}" title="${opp.lives[i]} — eliminada"><span style="font-size:.9rem">${IC[opp.lives[i]]}</span><span style="font-family:'Orbitron',monospace;font-size:.28rem;color:rgba(255,100,100,.8);text-transform:uppercase;margin-top:1px">${opp.lives[i]}</span></div>`;
+        return `<div class="life-pip dead" data-card="${opp.lives[i]}" title="${opp.lives[i]} — eliminada"><span style="font-size:.9rem">${IC[opp.lives[i]]}</span><span class="life-pip-lbl">${opp.lives[i]}</span></div>`;
       }
       if(rev) return `<div class="life-pip dead">☠</div>`;
       return `<div class="life-pip">🔒</div>`;
