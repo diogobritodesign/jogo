@@ -62,6 +62,12 @@ const simSpectators = new Map(); // simId  -> Set<ws>  (admin observers)
 const botRooms = new Map();      // roomId -> { bots: [{id,nick}], difficulty, tickTimer }
 const roomRules = new Map();     // roomId -> { ddos: bool }
 
+// Normalize game rules from client payload into a safe object with defaults
+function normalizeRules(raw) {
+  if (!raw || typeof raw !== 'object') return { ddos: true };
+  return { ddos: raw.ddos !== false };
+}
+
 // Returns the ID of the player whose turn it currently is (works on the raw game object).
 function getGameCurrentPlayerId(g) {
   return g.players[g.currentPlayerIndex]?.id;
@@ -726,9 +732,7 @@ wss.on('connection', (ws) => {
         const room = db.createRoom(info.playerId, maxPlayers, password||null);
         info.roomId = room.id;
         // Store game rules chosen by host
-        if (rules && typeof rules === 'object') {
-          roomRules.set(room.id, { ddos: rules.ddos !== false });
-        }
+        roomRules.set(room.id, normalizeRules(rules));
         // Don't send password back; include rules
         const safeRoom = {...room, password:undefined, rules: roomRules.get(room.id) || { ddos: true }};
         ws.send(JSON.stringify({type:'room_joined', room:safeRoom}));
@@ -784,7 +788,7 @@ wss.on('connection', (ws) => {
         const botCount = Math.min(5, Math.max(1, parseInt(payload?.botCount) || 1));
         const difficulty = ['easy','normal','hard'].includes(payload?.difficulty) ? payload.difficulty : 'normal';
         const diffLabel = { easy: '🟢', normal: '🟡', hard: '🔴' }[difficulty] || '';
-        const pvbRules = payload?.rules && typeof payload.rules === 'object' ? { ddos: payload.rules.ddos !== false } : { ddos: true };
+        const pvbRules = normalizeRules(payload?.rules);
 
         // Create bots (in-memory only — not stored in DB)
         const bots = Array.from({ length: botCount }, (_, i) => ({

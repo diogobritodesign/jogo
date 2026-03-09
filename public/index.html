@@ -890,8 +890,12 @@ function renderLobby(){
   const rules=myRoom.rules||{ddos:true};
   const rulesEl=document.getElementById('lobbyRules');
   if(rulesEl){
-    rulesEl.innerHTML='<span style="color:var(--cyan);letter-spacing:.12em">REGRAS:</span> '+
-      (rules.ddos!==false?'<span style="color:var(--magenta)">☢ DDoS ATIVO</span>':'<span style="color:var(--dim)">☢ DDoS DESATIVADO</span>');
+    rulesEl.textContent='';
+    const lbl=document.createElement('span');lbl.style.cssText='color:var(--cyan);letter-spacing:.12em';lbl.textContent='REGRAS: ';
+    const ddosLbl=document.createElement('span');
+    ddosLbl.style.color=rules.ddos!==false?'var(--magenta)':'var(--dim)';
+    ddosLbl.textContent=rules.ddos!==false?'☢ DDoS ATIVO':'☢ DDoS DESATIVADO';
+    rulesEl.appendChild(lbl);rulesEl.appendChild(ddosLbl);
   }
   document.getElementById('hostCtrl').style.display=isHost?'block':'none';
   const sb=document.getElementById('startBtn');
