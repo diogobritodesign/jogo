@@ -1,0 +1,1803 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SYSTEM BREACH</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--cyan:#00f5ff;--magenta:#ff00ff;--dark:#04080f;--darker:#020508;--border:rgba(0,245,255,.18);--text:#c8e6ff;--dim:rgba(200,230,255,.4);--danger:#ff1744;--gold:#ffd600;--green:#00e676;--orange:#ff9100;--scale:1}
+/* ── THEMES ──────────────────────────────────────────────────────────────── */
+[data-theme="dark-matter"]{--cyan:#25ace8;--magenta:#1d6586;--dark:#101218;--darker:#0c0e12;--border:rgba(37,172,232,.22);--text:#b8d4f0;--dim:rgba(180,210,240,.38);--danger:#ff4466;--gold:#e8c840;--green:#00d066;--orange:#f08020}
+[data-theme="cyberpunk"]{--cyan:#72eaf8;--magenta:#f3e600;--dark:#17000d;--darker:#0d0008;--border:rgba(114,234,248,.22);--text:#e0e0e0;--dim:rgba(224,224,224,.4);--danger:#ff003c;--gold:#f3e600;--green:#47d58b;--orange:#ff9100}
+[data-theme="soft"]{--cyan:#8b9cf4;--magenta:#d48af7;--dark:#1a1a2e;--darker:#13131f;--border:rgba(139,156,244,.22);--text:#d0d8ff;--dim:rgba(180,192,255,.4);--danger:#f06090;--gold:#e8c860;--green:#60d090;--orange:#e09060}
+[data-theme="crimson"]{--cyan:#ff2244;--magenta:#ff7700;--dark:#130007;--darker:#0c0004;--border:rgba(255,34,68,.28);--text:#ffd0d8;--dim:rgba(255,160,160,.45);--danger:#ff0022;--gold:#ffcc44;--green:#44ee88;--orange:#ff7700}
+.hidden-in-sim{display:none!important}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--darker);color:var(--text);font-family:'Rajdhani',sans-serif}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.07) 2px,rgba(0,0,0,.07) 4px);pointer-events:none;z-index:9999}
+.screen{display:none;width:100%;height:100%;align-items:center;justify-content:center;flex-direction:column;overflow-y:auto}
+.screen.active{display:flex}
+.logo{font-family:'Orbitron',monospace;font-size:clamp(1.8rem,5vw,3rem);font-weight:900;letter-spacing:.12em;background:linear-gradient(135deg,var(--cyan),var(--magenta));-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 25px rgba(0,245,255,.4));animation:flicker 6s infinite}
+.logo-sub{font-family:'Share Tech Mono',monospace;font-size:.72rem;letter-spacing:.4em;color:var(--cyan);opacity:.55;margin-top:5px;text-align:center}
+@keyframes flicker{0%,100%{opacity:1}93%{opacity:1}94%{opacity:.6}96%{opacity:1}97.5%{opacity:.4}98.5%{opacity:1}}
+.panel{background:rgba(4,12,26,.93);border:1px solid var(--border);border-radius:6px;padding:28px 30px;width:100%;max-width:420px;position:relative;overflow:hidden;backdrop-filter:blur(20px)}
+.panel::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),var(--magenta),transparent)}
+.panel-title{font-family:'Share Tech Mono',monospace;font-size:.62rem;letter-spacing:.3em;color:var(--cyan);text-transform:uppercase;margin-bottom:18px;opacity:.7}
+.field{margin-bottom:13px}
+.field label{display:block;font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--cyan);letter-spacing:.2em;margin-bottom:5px;text-transform:uppercase}
+.field input{width:100%;background:rgba(0,245,255,.04);border:1px solid var(--border);border-radius:3px;padding:10px 13px;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:.9rem;outline:none;transition:border-color .2s}
+.field input:focus{border-color:var(--cyan);box-shadow:0 0 10px rgba(0,245,255,.1)}
+.field input::placeholder{color:var(--dim)}
+.btn{font-family:'Orbitron',monospace;font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;border:none;border-radius:3px;padding:11px 20px;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:rgba(0,245,255,.1);color:var(--cyan);border:1px solid var(--cyan);width:100%}
+.btn-primary:hover{box-shadow:0 0 22px rgba(0,245,255,.22);background:rgba(0,245,255,.15)}
+.btn-secondary{background:transparent;color:var(--dim);border:1px solid rgba(200,230,255,.12);width:100%}
+.btn-secondary:hover{color:var(--text);border-color:rgba(200,230,255,.28)}
+.btn-danger{background:rgba(255,23,68,.1);color:var(--danger);border:1px solid var(--danger)}
+.btn-danger:hover{box-shadow:0 0 18px rgba(255,23,68,.18)}
+.btn-gold{background:rgba(255,214,0,.1);color:var(--gold);border:1px solid var(--gold)}
+.btn-magenta{background:rgba(255,0,255,.1);color:var(--magenta);border:1px solid var(--magenta)}
+.btn-green{background:rgba(0,230,118,.1);color:var(--green);border:1px solid var(--green)}
+.btn-sm{padding:5px 8px;font-size:.56rem}
+.btn-xs{padding:4px 9px;font-size:.55rem}
+.pvb-bots-btn.active,.pvb-diff-btn.active{background:rgba(0,245,255,.15);border-color:var(--cyan);color:var(--cyan)}
+.err-msg{font-family:'Share Tech Mono',monospace;font-size:.63rem;color:var(--danger);margin-top:8px;min-height:18px}
+.divider{display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--dim);font-size:.68rem}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.chk-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.chk-row input{accent-color:var(--cyan);width:14px;height:14px;cursor:pointer}
+.chk-row label{font-family:'Share Tech Mono',monospace;font-size:.63rem;color:var(--dim);cursor:pointer}
+/* LOBBY */
+.room-code-box{background:rgba(0,0,0,.5);border:1px solid var(--cyan);border-radius:4px;padding:14px;text-align:center;margin-bottom:18px;position:relative}
+.room-code-val{font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;letter-spacing:.45em;color:var(--cyan);text-shadow:0 0 18px var(--cyan)}
+.room-code-label{font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim);letter-spacing:.25em;margin-top:4px}
+.lock-tag{position:absolute;top:8px;right:10px;font-size:.7rem}
+.player-list{margin-bottom:14px}
+.player-item{display:flex;align-items:center;gap:8px;padding:8px 11px;background:rgba(0,245,255,.03);border:1px solid var(--border);border-radius:3px;margin-bottom:5px}
+.player-item.host{border-color:rgba(255,214,0,.28)}
+.pulse-dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 6px var(--cyan);animation:pdot 2s infinite;flex-shrink:0}
+@keyframes pdot{0%,100%{opacity:1}50%{opacity:.3}}
+.host-tag{font-family:'Share Tech Mono',monospace;font-size:.52rem;color:var(--gold);border:1px solid rgba(255,214,0,.35);padding:2px 6px;border-radius:2px;margin-left:auto}
+/* TOAST */
+.toast-wrap{position:fixed;top:14px;right:14px;z-index:9500;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.toast{background:rgba(3,10,22,.97);border-left:3px solid var(--cyan);padding:9px 14px;font-family:'Share Tech Mono',monospace;font-size:.66rem;color:var(--text);border-radius:2px;animation:tIn .22s ease;max-width:290px}
+.toast.error{border-color:var(--danger);color:var(--danger)}
+.toast.ok{border-color:var(--green);color:var(--green)}
+@keyframes tIn{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+/* ACTION NOTIFICATION OVERLAY */
+.action-notif{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:700;pointer-events:none}
+.action-notif-box{background:rgba(0,0,0,.82);border:2px solid var(--cyan);border-radius:10px;padding:22px 40px;text-align:center;transform:scale(0);opacity:0;transition:all .25s cubic-bezier(.34,1.56,.64,1);backdrop-filter:blur(12px)}
+.action-notif-box.show{transform:scale(1);opacity:1}
+.an-nick{font-family:'Orbitron',monospace;font-size:1.3rem;font-weight:900;color:var(--cyan);letter-spacing:.1em;margin-bottom:8px}
+.an-action{font-family:'Share Tech Mono',monospace;font-size:.9rem;color:var(--text);letter-spacing:.08em}
+.an-action.type-injection,.an-action.type-global_breach{color:var(--danger)}
+.an-action.type-mining{color:var(--gold)}
+.an-action.type-income,.an-action.type-foreign_aid{color:var(--green)}
+.an-action.type-intercept{color:var(--orange)}
+.an-action.type-analysis{color:#7878ff}
+.an-action.type-timeout{color:var(--dim)}
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:750;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
+.modal-bg.active{display:flex}
+.modal{background:rgba(4,12,26,.98);border:1px solid var(--cyan);border-radius:5px;padding:24px;width:90%;max-width:460px;position:relative;max-height:90vh;overflow-y:auto}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),var(--magenta),transparent)}
+.modal-title{font-family:'Orbitron',monospace;font-size:.72rem;letter-spacing:.18em;color:var(--cyan);margin-bottom:16px;text-transform:uppercase}
+/* SETTINGS PANEL */
+.settings-panel{position:fixed;top:52px;right:0;width:260px;background:rgba(2,6,14,.97);border-left:1px solid var(--border);border-bottom:1px solid var(--border);padding:16px;z-index:9300;transform:translateX(100%);transition:transform .25s ease;border-radius:0 0 0 6px;max-height:calc(100vh - 60px);overflow-y:auto}
+.settings-panel.open{transform:translateX(0)}
+.sp-title{font-family:'Share Tech Mono',monospace;font-size:.62rem;letter-spacing:.25em;color:var(--cyan);margin-bottom:14px;text-transform:uppercase}
+.sp-row{margin-bottom:14px}
+.sp-label{font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--dim);margin-bottom:6px;display:flex;justify-content:space-between}
+.sp-label span{color:var(--cyan)}
+input[type=range]{width:100%;accent-color:var(--cyan);cursor:pointer}
+/* TURN TIMER OVERLAY (on table, bottom-right) */
+.turn-timer-overlay{position:absolute;bottom:10px;right:10px;z-index:20;background:rgba(2,8,18,.88);border:1px solid var(--border);border-radius:6px;padding:7px 12px;font-family:'Share Tech Mono',monospace;display:none;flex-direction:column;gap:2px;min-width:150px;backdrop-filter:blur(8px)}
+.turn-timer-overlay.show{display:flex}
+.tto-label{font-size:.52rem;color:var(--dim);letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tto-time{font-size:.85rem;font-family:'Orbitron',monospace;font-weight:700;color:var(--cyan)}
+.tto-bar{height:2px;background:rgba(0,245,255,.1);border-radius:1px;margin-top:3px}
+.tto-bar-fill{height:100%;background:var(--cyan);transition:width .2s linear;border-radius:1px;width:100%}
+.turn-timer-overlay.urgent .tto-time{color:var(--danger);animation:blink .5s infinite}
+.turn-timer-overlay.urgent .tto-bar-fill{background:var(--danger)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+/* GAME LAYOUT */
+#screen-game{padding:0;overflow:hidden;background:var(--darker);align-items:flex-start;justify-content:flex-start}
+.game-wrap{width:100vw;height:100vh;overflow:hidden;transform-origin:top left}
+.game-root{width:100%;height:100%;display:grid;grid-template-columns:190px 1fr 255px;grid-template-rows:48px 1fr auto;grid-template-areas:"topbar topbar topbar""refpanel table sidebar""refpanel myzone sidebar"}
+/* TOPBAR */
+.topbar{grid-area:topbar;background:rgba(2,5,10,.97);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:11px;padding:0 14px;flex-shrink:0;position:relative}
+.tb-logo{font-family:'Orbitron',monospace;font-size:.88rem;font-weight:900;letter-spacing:.14em;background:linear-gradient(135deg,var(--cyan),var(--magenta));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.core-chip{display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:3px;padding:3px 9px}
+.core-lbl{font-family:'Share Tech Mono',monospace;font-size:.56rem;color:var(--dim);letter-spacing:.14em}
+.charges{display:flex;gap:4px}
+.chg{width:9px;height:9px;border-radius:50%;border:1px solid var(--magenta);transition:background .3s}
+.chg.on{background:var(--magenta);box-shadow:0 0 7px var(--magenta)}
+.core-val{font-family:'Share Tech Mono',monospace;font-size:.7rem;color:var(--magenta)}
+.ddos-tag{display:none;background:rgba(255,0,255,.1);border:1px solid var(--magenta);border-radius:3px;padding:3px 9px;font-family:'Orbitron',monospace;font-size:.56rem;color:var(--magenta);animation:gpulse 1s infinite}
+.ddos-tag.on{display:block}
+@keyframes gpulse{0%,100%{box-shadow:0 0 5px var(--magenta)}50%{box-shadow:0 0 16px var(--magenta)}}
+.deck-lbl{font-family:'Share Tech Mono',monospace;font-size:.56rem;color:var(--dim)}
+.phase-lbl{margin-left:auto;font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--cyan);letter-spacing:.08em}
+.tb-btn{font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim);cursor:pointer;border:1px solid var(--border);padding:3px 8px;border-radius:2px;flex-shrink:0;background:transparent;transition:all .15s}
+.tb-btn:hover{color:var(--text);border-color:rgba(200,230,255,.3)}
+/* TABLE FELT */
+.table-area{grid-area:table;position:relative;overflow:hidden;background:radial-gradient(ellipse 80% 72% at 50% 50%,rgba(0,30,62,.88) 0%,rgba(2,8,18,.98) 100%)}
+.table-area::before{content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:88%;height:84%;border-radius:50%;border:2px solid rgba(0,245,255,.09);box-shadow:0 0 38px rgba(0,245,255,.04),inset 0 0 55px rgba(0,0,0,.38);pointer-events:none}
+/* NUCLEUS */
+.nucleus{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;z-index:10;pointer-events:none}
+.nuc-ring{width:88px;height:88px;border-radius:50%;border:2px solid rgba(0,245,255,.18);background:rgba(0,10,25,.82);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 5px;box-shadow:0 0 22px rgba(0,245,255,.06)}
+.nuc-title{font-family:'Orbitron',monospace;font-size:.4rem;letter-spacing:.2em;color:var(--dim);text-transform:uppercase}
+.nuc-crypto{font-family:'Orbitron',monospace;font-size:1.05rem;font-weight:700;color:var(--magenta);text-shadow:0 0 10px var(--magenta)}
+.nuc-charges{display:flex;gap:5px;justify-content:center;margin-top:3px}
+.nc{width:10px;height:10px;border-radius:50%;border:1px solid var(--magenta)}
+.nc.on{background:var(--magenta);box-shadow:0 0 7px var(--magenta)}
+/* OPPONENTS — poker-style seats */
+.opp-ring{position:absolute;inset:0;pointer-events:none}
+.opp-seat{position:absolute;transform:translate(-50%,-50%);pointer-events:all}
+.opp-seat[data-pos="0"]{left:50%;top:9%}
+.opp-seat[data-pos="1"]{left:12%;top:28%}
+.opp-seat[data-pos="2"]{left:88%;top:28%}
+.opp-seat[data-pos="3"]{left:12%;top:72%}
+.opp-seat[data-pos="4"]{left:88%;top:72%}
+.opp-seat[data-pos="self"]{left:50%;top:86%}
+/* Seat wrapper: animation target, flex column with cards above info bar */
+.seat-wrap{display:flex;flex-direction:column;align-items:center;gap:5px;position:relative;border-radius:8px;transition:opacity .4s;padding:3px}
+.seat-wrap.out{opacity:.35;filter:grayscale(1)}
+.seat-wrap.target{cursor:pointer;animation:tgt .7s infinite alternate}
+@keyframes tgt{from{filter:drop-shadow(0 0 6px var(--danger))}to{filter:drop-shadow(0 0 2px rgba(255,23,68,.3))}}
+.seat-wrap.target::after{content:'🎯 ATACAR';position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-family:'Orbitron',monospace;font-size:.47rem;color:var(--danger);white-space:nowrap}
+/* Flash animations apply to the whole seat */
+.seat-wrap.attack-flash{animation:aflash .7s ease}
+@keyframes aflash{
+  0%{transform:scale(1.08);filter:drop-shadow(0 0 20px rgba(255,23,68,1))}
+  40%{transform:scale(.97)}
+  100%{transform:scale(1);filter:none}
+}
+.seat-wrap.block-flash{animation:bflash .7s ease}
+@keyframes bflash{
+  0%{transform:scale(1.06);filter:drop-shadow(0 0 18px rgba(0,230,118,.9))}
+  50%{transform:scale(.98)}
+  100%{transform:scale(1);filter:none}
+}
+.seat-wrap.elim-flash{animation:eflash 1.1s ease forwards}
+@keyframes eflash{
+  0%{transform:scale(1.12);filter:drop-shadow(0 0 30px rgba(255,23,68,1))}
+  30%{transform:scale(.88)}
+  60%{transform:scale(1.03)}
+  100%{transform:scale(1);opacity:.35;filter:grayscale(1)}
+}
+/* Card reveal overlay */
+.reveal-overlay{position:absolute;inset:0;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:rgba(0,230,118,.22);border:2px solid rgba(0,230,118,.7);box-shadow:0 0 24px rgba(0,230,118,.8);z-index:10;pointer-events:none;animation:revealPop 2.6s ease forwards}
+@keyframes revealPop{
+  0%{opacity:0;transform:scale(.7) rotateY(90deg)}
+  15%{opacity:1;transform:scale(1.06) rotateY(0deg)}
+  70%{opacity:1;transform:scale(1)}
+  100%{opacity:0;transform:scale(.95)}
+}
+.reveal-overlay-icon{font-size:1.5rem;line-height:1}
+.reveal-overlay-lbl{font-family:'Orbitron',monospace;font-size:.42rem;color:#00e676;letter-spacing:.1em;text-transform:uppercase;font-weight:700}
+/* Cards row — prominent at TOP of seat */
+.seat-cards{display:flex;gap:6px;justify-content:center}
+/* Life pips: opponent hidden cards / eliminated revealed cards (cards ARE lives) */
+.life-pip{width:32px;height:46px;border-radius:5px;border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:1.15rem;background:rgba(0,245,255,.04);transition:all .3s;gap:1px}
+.life-pip.dead{background:rgba(255,23,68,.08);border-color:rgba(255,23,68,.38);opacity:.6;filter:grayscale(.3)}
+/* Info bar — compact dark label BELOW cards */
+.seat-info{background:rgba(2,8,20,.88);border:1px solid var(--border);border-radius:5px;padding:4px 10px;display:flex;gap:8px;align-items:center;justify-content:center;white-space:nowrap;max-width:160px;min-width:90px}
+.seat-wrap.my-turn .seat-info{border-color:var(--cyan);box-shadow:0 0 10px rgba(0,245,255,.2)}
+.seat-wrap.my-turn{animation:turn-glow .85s ease-in-out infinite alternate;border-radius:8px}
+@keyframes turn-glow{from{filter:drop-shadow(0 0 5px rgba(0,245,255,.45))}to{filter:drop-shadow(0 0 16px rgba(0,245,255,.9))}}
+.seat-wrap.target .seat-info{border-color:var(--danger)}
+.seat-wrap.spectator-view .seat-info{opacity:.5;border-style:dashed}
+.opp-nick{font-family:'Orbitron',monospace;font-size:.65rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px}
+.opp-crypto{font-family:'Share Tech Mono',monospace;font-size:.72rem;color:var(--gold);white-space:nowrap}
+/* Self seat hand cards */
+.self-hcard{width:50px;height:68px;border-radius:6px;border:1px solid var(--cyan);background:rgba(0,245,255,.08);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;box-shadow:0 0 10px rgba(0,245,255,.12)}
+.self-hcard-icon{font-size:1.9rem;line-height:1}
+.self-hcard-lbl{font-family:'Orbitron',monospace;font-size:.38rem;color:var(--cyan);text-transform:uppercase;letter-spacing:.05em}
+/* Dead card (life lost) — same size as hand card but red/grey, non-interactive */
+.self-hcard.dead{border-color:rgba(255,23,68,.45);background:rgba(255,23,68,.08);box-shadow:0 0 8px rgba(255,23,68,.12);opacity:.55;filter:grayscale(.35);cursor:default;pointer-events:none}
+.self-hcard.dead .self-hcard-icon{opacity:.7}
+.self-hcard.dead .self-hcard-lbl{color:var(--danger);opacity:.7}
+/* Dead card label for opponent life pips */
+.life-pip-lbl{font-family:'Orbitron',monospace;font-size:.28rem;color:rgba(255,100,100,.8);text-transform:uppercase;margin-top:1px}
+/* Projectile overlay canvas */
+#animCanvas{position:fixed;inset:0;pointer-events:none;z-index:650}
+/* Spectator overlay on my zone */
+.spec-overlay{position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;border-radius:4px;z-index:2;pointer-events:none}
+.spec-overlay-txt{font-family:'Orbitron',monospace;font-size:.55rem;letter-spacing:.2em;color:var(--dim);text-transform:uppercase}
+/* Eliminated player revealed cards */
+.elim-hand{display:flex;gap:5px;justify-content:center;margin-top:4px;flex-wrap:wrap}
+.elim-hcard{width:26px;height:36px;border-radius:3px;border:1px solid rgba(255,23,68,.4);background:rgba(255,23,68,.06);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.85rem}
+.elim-hcard-lbl{font-family:'Orbitron',monospace;font-size:.32rem;color:rgba(255,100,100,.7);margin-top:1px}
+.turn-arr{position:absolute;top:-16px;left:50%;transform:translateX(-50%);color:var(--cyan);font-size:.68rem;animation:arr .6s infinite alternate}
+@keyframes arr{from{transform:translateX(-50%) translateY(0)}to{transform:translateX(-50%) translateY(-4px)}}
+.off-tag{font-family:'Share Tech Mono',monospace;font-size:.48rem;color:var(--danger);position:absolute;top:-1px;right:0;transform:translateY(-100%)}
+.spec-tag{font-family:'Share Tech Mono',monospace;font-size:.48rem;color:var(--dim);position:absolute;top:3px;left:5px}
+/* revealed cards for eliminated spectator */
+.elim-cards{display:flex;gap:3px;justify-content:center;margin-top:4px;flex-wrap:wrap}
+.elim-card-sm{width:18px;height:24px;border-radius:2px;border:1px solid rgba(255,23,68,.3);background:rgba(255,23,68,.05);display:flex;align-items:center;justify-content:center;font-size:.6rem}
+/* MY ZONE — actions only */
+.myzone{grid-area:myzone;background:rgba(2,6,14,.97);border-top:2px solid rgba(0,245,255,.11);display:flex;flex-direction:column;padding:8px 16px 10px;overflow:hidden;max-height:200px}
+.myzone-top{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+.myzone-bottom{display:flex;gap:11px;align-items:center;flex:1;min-height:0}
+.my-profile{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:110px}
+.my-avatar{width:42px;height:42px;border-radius:50%;background:rgba(0,245,255,.08);border:2px solid var(--cyan);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:1rem;font-weight:900;color:var(--cyan);text-transform:uppercase;flex-shrink:0;box-shadow:0 0 12px rgba(0,245,255,.15)}
+.my-nick{background:rgba(0,245,255,.05);border:1px solid rgba(0,245,255,.2);border-radius:4px;padding:3px 7px;font-family:'Orbitron',monospace;font-size:.66rem;font-weight:700;color:var(--cyan);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:106px}
+.my-nick.spectating{color:var(--dim);border-color:var(--dim)}
+.my-stats{display:flex;gap:6px;align-items:center;justify-content:center}
+.my-crypto{font-family:'Share Tech Mono',monospace;font-size:1rem;color:var(--gold)}
+.my-lives{display:flex;gap:4px}
+.my-lc{width:36px;height:50px;border-radius:5px;border:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:1.1rem;background:rgba(0,245,255,.04);transition:all .5s;gap:2px}
+.my-lc.revealed{background:rgba(255,23,68,.08);border-color:rgba(255,23,68,.38)}
+.my-lc-lbl{font-family:'Orbitron',monospace;font-size:.3rem;color:var(--dim);text-transform:uppercase}
+.hand-area{display:flex;flex-direction:column;gap:4px}
+.hand-lbl{font-family:'Share Tech Mono',monospace;font-size:.62rem;letter-spacing:.24em;color:var(--dim);text-transform:uppercase}
+.hand-cards{display:flex;gap:8px;flex-wrap:wrap}
+.gcard{width:96px;height:134px;background:rgba(4,10,24,.95);border:1px solid var(--border);border-radius:7px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;flex-shrink:0}
+.gcard::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,245,255,.05) 0%,transparent 60%)}
+.gcard:hover{transform:translateY(-10px) scale(1.06);box-shadow:0 12px 28px rgba(0,245,255,.16)}
+.gcard.sel{transform:translateY(-12px);border-color:var(--cyan);box-shadow:0 0 20px rgba(0,245,255,.35)}
+.ci{font-size:2.4rem;margin-bottom:5px}
+.cl{font-family:'Orbitron',monospace;font-size:.58rem;letter-spacing:.07em;text-align:center;text-transform:uppercase;padding:0 4px}
+.gcard.Admin{border-color:rgba(255,214,0,.28)}.gcard.Admin .cl{color:var(--gold)}
+.gcard.Trojan{border-color:rgba(255,23,68,.28)}.gcard.Trojan .cl{color:var(--danger)}
+.gcard.Firewall{border-color:rgba(0,230,118,.28)}.gcard.Firewall .cl{color:var(--green)}
+.gcard.Phisher{border-color:rgba(255,145,0,.28)}.gcard.Phisher .cl{color:var(--orange)}
+.gcard.Sniffer{border-color:rgba(110,110,255,.28)}.gcard.Sniffer .cl{color:#7878ff}
+/* ACTION ZONE */
+.action-zone{flex:1;display:flex;flex-direction:column;gap:3px;overflow-y:auto;overflow-x:hidden}
+.alert-box{border-radius:4px;padding:7px 10px;font-family:'Share Tech Mono',monospace;font-size:.64rem;margin-bottom:3px}
+.alert-warn{background:rgba(255,145,0,.06);border:1px solid rgba(255,145,0,.28);color:#ffa000}
+.alert-wait{background:rgba(0,245,255,.04);border:1px solid var(--border);color:var(--dim);text-align:center}
+.alert-danger{background:rgba(255,23,68,.06);border:1px solid rgba(255,23,68,.28);color:var(--danger)}
+.alert-spec{background:rgba(200,230,255,.04);border:1px solid var(--border);color:var(--dim);text-align:center;font-style:italic}
+.ag{display:grid;grid-template-columns:1fr 1fr;gap:3px}
+/* SIDEBAR */
+.sidebar{grid-area:sidebar;display:flex;flex-direction:column;background:rgba(2,5,12,.97);border-left:1px solid var(--border);overflow:hidden}
+.sb-hdr{padding:7px 10px;border-bottom:1px solid var(--border);font-family:'Share Tech Mono',monospace;font-size:.58rem;letter-spacing:.24em;color:var(--dim);text-transform:uppercase}
+.game-log{flex:1;overflow-y:auto;padding:7px 9px;font-family:'Share Tech Mono',monospace;font-size:.64rem;line-height:1.85;color:var(--dim)}
+.game-log::-webkit-scrollbar{width:3px}
+.log-ln{border-bottom:1px solid rgba(0,245,255,.04);padding:1px 0}
+.log-ln.hi{color:var(--cyan)}.log-ln.bad{color:var(--danger)}.log-ln.good{color:var(--gold)}
+.chat-box{padding:7px 9px;border-top:1px solid var(--border)}
+.chat-msgs{height:66px;overflow-y:auto;font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--dim);margin-bottom:5px}
+.chat-msg .from{color:var(--cyan)}
+.chat-row{display:flex;gap:4px}
+.chat-inp{flex:1;background:rgba(0,245,255,.04);border:1px solid var(--border);border-radius:2px;padding:4px 7px;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:.6rem;outline:none}
+.chat-inp:focus{border-color:var(--cyan)}
+/* REFERENCE PANEL */
+.ref-panel{grid-area:refpanel;background:rgba(2,5,12,.98);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
+.ref-panel::-webkit-scrollbar{width:3px}
+.ref-panel::-webkit-scrollbar-thumb{background:var(--border)}
+.ref-hdr{padding:7px 9px;border-bottom:1px solid var(--border);font-family:'Share Tech Mono',monospace;font-size:.54rem;letter-spacing:.22em;color:var(--dim);text-transform:uppercase;flex-shrink:0}
+.ref-card-item{padding:8px 9px;border-bottom:1px solid rgba(0,245,255,.05)}
+.ref-card-item:last-child{border-bottom:none}
+.ref-card-name{font-family:'Orbitron',monospace;font-size:.65rem;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:5px;letter-spacing:.06em}
+.ref-card-desc{font-family:'Share Tech Mono',monospace;font-size:.56rem;color:var(--dim);line-height:1.7}
+.ref-divider{margin:4px 9px;border:none;border-top:1px solid rgba(0,245,255,.07)}
+/* TOOLTIP */
+.tooltip{position:fixed;background:rgba(2,8,20,.97);border:1px solid var(--cyan);border-radius:6px;padding:11px 14px;font-family:'Share Tech Mono',monospace;font-size:.66rem;color:var(--text);line-height:1.8;pointer-events:none;z-index:9999;max-width:230px;opacity:0;transition:opacity .15s;white-space:pre-line;box-shadow:0 4px 20px rgba(0,245,255,.15)}
+.tooltip.visible{opacity:1}
+.tooltip-title{font-family:'Orbitron',monospace;font-size:.72rem;font-weight:700;margin-bottom:6px;letter-spacing:.08em}
+/* WIN SCREEN */
+.win-screen{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:800;align-items:center;justify-content:center;flex-direction:column;gap:14px;backdrop-filter:blur(12px)}
+.win-screen.active{display:flex}
+.win-title{font-family:'Orbitron',monospace;font-size:clamp(1.8rem,4.5vw,3rem);font-weight:900;text-align:center;animation:wgl 2s infinite alternate}
+@keyframes wgl{from{filter:drop-shadow(0 0 10px rgba(255,214,0,.5))}to{filter:drop-shadow(0 0 28px rgba(255,0,255,.6))}}
+.win-sub{font-family:'Share Tech Mono',monospace;font-size:.88rem;color:var(--cyan);letter-spacing:.3em;text-align:center}
+.win-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+/* HISTORY TABLE */
+.hist-table{width:100%;border-collapse:collapse}
+.hist-table th{font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--cyan);padding:7px 8px;border-bottom:1px solid var(--border);text-align:left;text-transform:uppercase;letter-spacing:.1em}
+.hist-table td{padding:7px 8px;border-bottom:1px solid rgba(0,245,255,.06);font-family:'Share Tech Mono',monospace;font-size:.68rem}
+.won-row td{color:var(--gold)}
+@media(max-width:640px){
+  .game-root{grid-template-columns:1fr;grid-template-rows:44px 1fr 155px 200px;grid-template-areas:"topbar""table""myzone""sidebar"}
+  .sidebar{max-height:180px;border-left:none;border-top:1px solid var(--border)}
+  .ref-panel{display:none}
+}
+/* PAUSE OVERLAY */
+.pause-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:850;flex-direction:column;align-items:center;justify-content:center;backdrop-filter:blur(6px);display:none}
+.pause-overlay.active{display:flex}
+.pause-num{font-family:'Orbitron',monospace;font-size:4.5rem;font-weight:900;color:var(--magenta);text-shadow:0 0 35px var(--magenta),0 0 60px rgba(255,0,255,.5);margin:10px 0}
+.pause-label{font-family:'Share Tech Mono',monospace;font-size:.72rem;letter-spacing:.35em;color:var(--dim);text-transform:uppercase}
+/* CARD INSPECT OVERLAY */
+.card-inspect-overlay{position:fixed;inset:0;z-index:9900;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;backdrop-filter:blur(18px);cursor:zoom-out;perspective:900px}
+.card-inspect-overlay.open{display:flex}
+.card-inspect-wrap{position:relative;transform-style:preserve-3d;transition:transform .08s linear;will-change:transform}
+.card-inspect-inner{width:min(72vw,480px);height:auto;aspect-ratio:17.5/12.5;border-radius:12px;overflow:hidden;box-shadow:0 0 60px rgba(0,245,255,.25),0 40px 80px rgba(0,0,0,.8);position:relative;background:rgba(4,10,24,.95);border:2px solid var(--cyan)}
+.card-inspect-inner.has-img img{width:100%;height:100%;object-fit:cover;display:block}
+.card-inspect-inner.no-img{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+.card-inspect-no-img-icon{font-size:clamp(4rem,12vw,7rem);line-height:1}
+.card-inspect-no-img-label{font-family:'Orbitron',monospace;font-size:clamp(.9rem,3vw,1.5rem);font-weight:700;color:var(--cyan);letter-spacing:.12em;text-transform:uppercase}
+.card-inspect-close{position:absolute;top:14px;right:16px;font-size:1.4rem;color:var(--dim);cursor:pointer;z-index:2;background:rgba(0,0,0,.5);border:none;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;transition:color .15s}
+.card-inspect-close:hover{color:var(--cyan)}
+.card-inspect-name{position:absolute;bottom:14px;left:0;right:0;text-align:center;font-family:'Orbitron',monospace;font-size:.7rem;letter-spacing:.18em;color:var(--dim);pointer-events:none}
+/* THEME SELECTOR */
+.theme-btn{display:flex;align-items:center;gap:6px;padding:5px 9px;border-radius:4px;border:1px solid rgba(200,230,255,.12);background:transparent;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim);transition:all .15s;width:100%}
+.theme-btn:hover,.theme-btn.active{border-color:var(--cyan);color:var(--cyan);background:rgba(0,245,255,.06)}
+.theme-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+/* Avatar */
+.avatar{width:36px;height:36px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:.65rem;font-weight:700;color:var(--cyan);background:rgba(0,245,255,.08);overflow:hidden;flex-shrink:0}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.avatar-lg{width:72px;height:72px;font-size:1.2rem;border-width:2px}
+.avatar-sm{width:24px;height:24px;font-size:.45rem}
+.profile-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.profile-stat{background:rgba(0,245,255,.04);border:1px solid var(--border);border-radius:4px;padding:8px;text-align:center}
+.profile-stat-val{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:700;color:var(--cyan)}
+.profile-stat-lbl{font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--dim);letter-spacing:.12em;margin-top:3px}
+.profile-section{margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.profile-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.avatar-upload-area{display:flex;align-items:center;gap:14px;margin-bottom:10px}
+.avatar-upload-area input[type="file"]{display:none}
+.player-info-header{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.opp-avatar{position:absolute;top:-2px;right:-2px;z-index:2}
+.seat-wrap{position:relative}
+</style>
+</head>
+<body>
+<div class="toast-wrap" id="toastWrap"></div>
+<div class="action-notif" id="actionNotif"><div class="action-notif-box" id="actionNotifBox"><div class="an-nick" id="anNick"></div><div class="an-action" id="anAction"></div></div></div>
+<canvas id="animCanvas"></canvas>
+<div id="tooltip" class="tooltip"></div>
+
+<!-- CARD INSPECT OVERLAY -->
+<div id="cardInspectOverlay" class="card-inspect-overlay" onclick="closeCardInspect(event)">
+  <div class="card-inspect-wrap" id="cardInspectWrap">
+    <button class="card-inspect-close" onclick="closeCardInspect(null)">✕</button>
+    <div class="card-inspect-inner" id="cardInspectInner"></div>
+    <div class="card-inspect-name" id="cardInspectName"></div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div class="screen active" id="screen-login">
+  <div style="text-align:center;margin-bottom:26px"><div class="logo">SYSTEM BREACH</div><div class="logo-sub">// multiplayer card bluff game //</div></div>
+  <div class="panel">
+    <div class="panel-title">// login //</div>
+    <div class="field"><label>Nick</label><input id="lNick" placeholder="seu_handle" autocomplete="username" spellcheck="false" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="field"><label>Senha</label><input id="lPass" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="chk-row"><input type="checkbox" id="lRem"><label for="lRem">Lembrar de mim (30 dias)</label></div>
+    <button class="btn btn-primary" onclick="doLogin()">▶ ENTRAR</button>
+    <div class="err-msg" id="lErr"></div>
+    <div class="divider">novo?</div>
+    <button class="btn btn-secondary" onclick="showScreen('register')">⊕ CRIAR CONTA</button>
+  </div>
+</div>
+
+<!-- REGISTER -->
+<div class="screen" id="screen-register">
+  <div style="text-align:center;margin-bottom:26px"><div class="logo">SYSTEM BREACH</div><div class="logo-sub">// criar conta //</div></div>
+  <div class="panel">
+    <div class="panel-title">// cadastro //</div>
+    <div class="field"><label>Nick</label><input id="rNick" placeholder="seu_handle (2-20 chars)" maxlength="20" autocomplete="username" spellcheck="false" oninput="this.value=this.value.replace(/[^a-zA-Z0-9_\-\.]/g,'')"></div>
+    <div class="field"><label>Senha</label><input id="rPass" type="password" placeholder="mínimo 4 caracteres" autocomplete="new-password"></div>
+    <div class="field"><label>Confirmar Senha</label><input id="rPass2" type="password" placeholder="repita a senha" onkeydown="if(event.key==='Enter')doRegister()"></div>
+    <button class="btn btn-primary" onclick="doRegister()">⊕ CRIAR CONTA</button>
+    <div class="err-msg" id="rErr"></div>
+    <button class="btn btn-secondary" onclick="showScreen('login')">← VOLTAR</button>
+  </div>
+</div>
+
+<!-- MENU -->
+<div class="screen" id="screen-menu">
+  <div style="text-align:center;margin-bottom:26px"><div class="logo">SYSTEM BREACH</div><div class="logo-sub" id="menuWelcome">// conectado //</div></div>
+  <div class="panel">
+    <div class="panel-title">// menu principal //</div>
+    <button class="btn btn-primary" onclick="openModal('modalCreateRoom')">⊕ CRIAR SALA</button>
+    <button class="btn btn-secondary" onclick="openModal('modalJoinRoom')">→ ENTRAR EM SALA</button>
+    <button class="btn btn-secondary" style="border-color:rgba(0,230,118,.35);color:#00e676" onclick="openModal('modalPlayVsBots')">🤖 JOGAR VS BOTS</button>
+    <button class="btn btn-secondary" onclick="showLeaderboard()">◈ LEADERBOARD</button>
+    <button class="btn btn-secondary" onclick="showHistory()">📊 MEU HISTÓRICO</button>
+    <div class="divider">conta</div>
+    <button class="btn btn-secondary" style="font-size:.6rem;padding:8px" onclick="openModal('modalProfile')">👤 MEU PERFIL</button>
+    <button class="btn btn-secondary" style="font-size:.6rem;padding:8px;margin-top:5px" onclick="showRules()">📋 REGRAS</button>
+    <button class="btn btn-secondary" style="font-size:.6rem;padding:8px;margin-top:5px;color:var(--danger);border-color:rgba(255,23,68,.2)" onclick="doLogout()">⏻ SAIR</button>
+  </div>
+</div>
+
+<!-- LOBBY -->
+<div class="screen" id="screen-lobby">
+  <div class="panel" style="max-width:480px">
+    <div class="panel-title">// sala de espera //</div>
+    <div class="room-code-box">
+      <div class="room-code-val" id="roomCodeVal">-----</div>
+      <div class="room-code-label">CÓDIGO DA SALA</div>
+      <div class="lock-tag" id="roomLockTag" style="display:none">🔒</div>
+    </div>
+    <div class="panel-title">JOGADORES</div>
+    <div class="player-list" id="lobbyList"></div>
+    <div id="lobbyRules" style="margin:10px 0;padding:8px;border:1px solid var(--border);border-radius:4px;font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--dim)"></div>
+    <div id="hostCtrl" style="display:none">
+      <button class="btn btn-primary" id="startBtn" onclick="doStartGame()">▶ INICIAR PARTIDA</button>
+    </div>
+    <button class="btn btn-secondary" onclick="doLeaveRoom()">← SAIR DA SALA</button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div class="screen" id="screen-game">
+  <div class="game-wrap" id="gameWrap">
+  <div class="game-root">
+    <div class="topbar">
+      <div class="tb-logo">SYS//BREACH</div>
+      <div class="core-chip" id="coreChip">
+        <div class="core-lbl">NÚCLEO</div>
+        <div class="charges" id="coreCharges"><div class="chg" id="ch0"></div><div class="chg" id="ch1"></div><div class="chg" id="ch2"></div></div>
+        <div class="core-val" id="coreVal">₵0</div>
+      </div>
+      <div class="ddos-tag" id="ddosTag">☢ DDoS</div>
+      <div class="deck-lbl" id="deckLbl" title="Baralho: 15 cartas no total (3 de cada), 2 cartas por jogador são distribuídas no início" style="cursor:help">DECK:0</div>
+      <div class="deck-lbl" id="matchTimer" style="color:var(--dim)">⏱ 0:00</div>
+      <div class="phase-lbl" id="phaseLbl">—</div>
+      <button class="tb-btn" id="extendTurnBtn" onclick="doExtendTurn()" style="display:none;color:var(--gold);border-color:rgba(255,214,0,.35)" title="Pagar ₵1 para adicionar 30s ao seu turno">+30s ₵1</button>
+      <button class="tb-btn" id="pauseVoteBtn" onclick="doVotePause()" title="Votar para pausar o jogo">⏸</button>
+      <button class="tb-btn" onclick="confirmLeaveGame()" title="Sair da partida" style="margin-left:4px;color:var(--danger);border-color:rgba(255,23,68,.35)">✕</button>
+      <button class="tb-btn" onclick="openModal('modalProfile')" title="Meu Perfil">👤</button>
+      <button class="tb-btn" onclick="toggleSettings()" title="Configurações (tema, zoom)">⚙ CONFIG</button>
+    </div>
+    <!-- REFERENCE PANEL -->
+    <div class="ref-panel" id="refPanel">
+      <div class="ref-hdr">// referência //</div>
+      <div class="ref-card-item">
+        <div class="ref-card-name" style="color:var(--gold)">🟡 Admin</div>
+        <div class="ref-card-desc">⚡ +₵3 (coleta)<br>🛡 Bloqueia Ajuda Externa</div>
+      </div>
+      <div class="ref-card-item">
+        <div class="ref-card-name" style="color:var(--danger)">🔴 Trojan</div>
+        <div class="ref-card-desc">⚡ Paga ₵3 → alvo perde carta<br>🔒 Bloqueado: Firewall</div>
+      </div>
+      <div class="ref-card-item">
+        <div class="ref-card-name" style="color:var(--green)">🟢 Firewall</div>
+        <div class="ref-card-desc">🛡 Bloqueia Trojan</div>
+      </div>
+      <div class="ref-card-item">
+        <div class="ref-card-name" style="color:var(--orange)">🟠 Phisher</div>
+        <div class="ref-card-desc">⚡ Rouba ₵2 do alvo<br>🛡 Bloqueia Phisher/Sniffer</div>
+      </div>
+      <div class="ref-card-item">
+        <div class="ref-card-name" style="color:#7878ff">🔵 Sniffer</div>
+        <div class="ref-card-desc">⚡ Vê 2 cartas, troca ou +₵1<br>🛡 Bloqueia Phisher</div>
+      </div>
+      <hr class="ref-divider">
+      <div class="ref-card-item">
+        <div class="ref-card-desc">
+          💰 Renda: +₵1 (livre)<br>
+          📡 Ajuda: +₵2 (bloq. Admin)<br>
+          💥 Breach ₵7: perde carta
+        </div>
+      </div>
+      <hr class="ref-divider">
+      <div class="ref-hdr" style="padding:5px 9px;font-size:.5rem;flex-shrink:0">// cartas eliminadas //</div>
+      <div id="elimCardsPanel" style="padding:6px 9px;display:flex;flex-wrap:wrap;gap:4px;min-height:26px"></div>
+    </div>
+    <div class="table-area">
+      <div class="opp-ring" id="oppRing"></div>
+        <div class="nucleus">
+          <div class="nuc-ring"><div class="nuc-title">NÚCLEO</div><div class="nuc-crypto" id="nucCrypto">₵0</div></div>
+          <div class="nuc-charges" id="nucCharges"><div class="nc" id="nc0"></div><div class="nc" id="nc1"></div><div class="nc" id="nc2"></div></div>
+        </div>
+      <div id="turnTimerOverlay" class="turn-timer-overlay">
+        <div class="tto-label" id="ttoLabel"></div>
+        <div class="tto-time" id="ttoTime"></div>
+        <div class="tto-bar"><div class="tto-bar-fill" id="ttoBarFill"></div></div>
+      </div>
+    </div>
+    <div class="myzone">
+      <div class="action-zone" id="actionZone"></div>
+    </div>
+    <div class="sidebar">
+      <div class="sb-hdr">// log //</div>
+      <div class="game-log" id="gameLog"></div>
+      <div class="chat-box">
+        <div class="sb-hdr" style="border:none;padding:0 0 4px">// chat //</div>
+        <div class="chat-msgs" id="chatMsgs"></div>
+        <div class="chat-row">
+          <input class="chat-inp" id="chatInp" placeholder="mensagem..." maxlength="150" onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="btn btn-primary btn-xs" onclick="sendChat()">▶</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PAUSE OVERLAY -->
+<div id="pauseOverlay" class="pause-overlay">
+  <div class="pause-label">jogo pausado</div>
+  <div class="pause-num" id="pauseCountdown">30</div>
+  <div class="pause-label">segundos</div>
+</div>
+
+<!-- WIN -->
+<div class="win-screen" id="winScreen">
+  <div class="win-title" id="winTitle" style="background:linear-gradient(135deg,var(--gold),var(--magenta));-webkit-background-clip:text;-webkit-text-fill-color:transparent">ACESSO ROOT</div>
+  <div class="win-sub" id="winSub">CONQUISTADO</div>
+  <div class="win-btns" style="margin-top:14px">
+    <button class="btn btn-green" id="rematchBtn" onclick="doRematch()" style="display:none">🔄 REVANCHE</button>
+    <button class="btn btn-gold" onclick="returnMenu()">▶ MENU PRINCIPAL</button>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-bg" id="modalCreateRoom">
+  <div class="modal">
+    <div class="modal-title">// criar sala //</div>
+    <div class="field"><label>Máx. Jogadores (2–6)</label><input type="number" id="maxP" value="6" min="2" max="6"></div>
+    <div class="field"><label>Senha da sala (opcional)</label><input id="roomPw" placeholder="deixe vazio para sala pública"></div>
+    <div style="margin:12px 0 14px;padding:10px;border:1px solid var(--border);border-radius:4px">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--cyan);letter-spacing:.15em;margin-bottom:8px">REGRAS DA PARTIDA</div>
+      <div class="chk-row"><input type="checkbox" id="ruleDDoS" checked><label for="ruleDDoS">☢ Ativar DDoS (núcleo / eliminação total)</label></div>
+    </div>
+    <button class="btn btn-primary" onclick="doCreateRoom()">⊕ CRIAR</button>
+    <button class="btn btn-secondary" onclick="closeModal('modalCreateRoom')">← CANCELAR</button>
+  </div>
+</div>
+<div class="modal-bg" id="modalJoinRoom">
+  <div class="modal">
+    <div class="modal-title">// entrar em sala //</div>
+    <div class="field"><label>Código</label><input id="joinCode" placeholder="XXXXX" maxlength="5" style="text-transform:uppercase;letter-spacing:.35em;font-size:1.3rem;text-align:center" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')doJoinRoom()"></div>
+    <div class="field"><label>Senha (se necessário)</label><input id="joinPw" placeholder="senha da sala" onkeydown="if(event.key==='Enter')doJoinRoom()"></div>
+    <button class="btn btn-primary" onclick="doJoinRoom()">→ ENTRAR</button>
+    <button class="btn btn-secondary" onclick="closeModal('modalJoinRoom')">← CANCELAR</button>
+  </div>
+</div>
+<div class="modal-bg" id="modalPlayVsBots">
+  <div class="modal">
+    <div class="modal-title">// jogar vs bots //</div>
+    <div class="field">
+      <label>Nº de Bots (1–5)</label>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        <button class="btn btn-secondary btn-sm pvb-bots-btn" onclick="setPvbBots(1)" id="pvbB1" style="flex:1">1</button>
+        <button class="btn btn-secondary btn-sm pvb-bots-btn" onclick="setPvbBots(2)" id="pvbB2" style="flex:1">2</button>
+        <button class="btn btn-secondary btn-sm pvb-bots-btn" onclick="setPvbBots(3)" id="pvbB3" style="flex:1">3</button>
+        <button class="btn btn-secondary btn-sm pvb-bots-btn" onclick="setPvbBots(4)" id="pvbB4" style="flex:1">4</button>
+        <button class="btn btn-secondary btn-sm pvb-bots-btn" onclick="setPvbBots(5)" id="pvbB5" style="flex:1">5</button>
+      </div>
+    </div>
+    <div class="field" style="margin-top:12px">
+      <label>Dificuldade</label>
+      <div style="display:flex;gap:7px">
+        <button class="btn btn-secondary btn-sm pvb-diff-btn" onclick="setPvbDiff('easy')" id="pvbDEasy" style="flex:1;color:#00e676;border-color:rgba(0,230,118,.35)">🟢 Fácil</button>
+        <button class="btn btn-secondary btn-sm pvb-diff-btn" onclick="setPvbDiff('normal')" id="pvbDNormal" style="flex:1;color:var(--gold);border-color:rgba(255,214,0,.35)">🟡 Normal</button>
+        <button class="btn btn-secondary btn-sm pvb-diff-btn" onclick="setPvbDiff('hard')" id="pvbDHard" style="flex:1;color:var(--danger);border-color:rgba(255,23,68,.35)">🔴 Difícil</button>
+      </div>
+    </div>
+    <div id="pvbDiffDesc" style="font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim);text-align:center;margin:10px 0 14px;min-height:2.2em"></div>
+    <div style="margin:0 0 14px;padding:10px;border:1px solid var(--border);border-radius:4px">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--cyan);letter-spacing:.15em;margin-bottom:8px">REGRAS DA PARTIDA</div>
+      <div class="chk-row"><input type="checkbox" id="pvbRuleDDoS" checked><label for="pvbRuleDDoS">☢ Ativar DDoS (núcleo / eliminação total)</label></div>
+    </div>
+    <button class="btn btn-primary" onclick="doPlayVsBots()">🤖 INICIAR</button>
+    <button class="btn btn-secondary" onclick="closeModal('modalPlayVsBots')">← CANCELAR</button>
+  </div>
+</div>
+<div class="modal-bg" id="modalProfile">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-title">// meu perfil //</div>
+    <div class="profile-section">
+      <div class="avatar-upload-area">
+        <div class="avatar avatar-lg" id="profileAvatar">??</div>
+        <div>
+          <button class="btn btn-secondary btn-sm" onclick="doUploadAvatar()" style="margin-bottom:5px">📷 Alterar Foto</button>
+          <button class="btn btn-secondary btn-sm" onclick="doRemoveAvatar()" style="font-size:.5rem;padding:3px 6px">✕ Remover</button>
+          <input type="file" id="avatarFileInput" accept="image/*" onchange="handleAvatarFile(this)" style="display:none">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:.5rem;color:var(--dim);margin-top:4px">JPEG/PNG • max 128px</div>
+        </div>
+      </div>
+    </div>
+    <div class="profile-section">
+      <label style="font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--cyan);letter-spacing:.15em">NICK</label>
+      <div style="display:flex;gap:7px;margin-top:5px">
+        <input id="profileNickInput" style="flex:1;background:rgba(0,245,255,.04);border:1px solid var(--border);border-radius:3px;padding:7px 10px;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:.85rem" maxlength="20" oninput="this.value=this.value.replace(/[^a-zA-Z0-9_\-\.]/g,'')">
+        <button class="btn btn-primary btn-sm" onclick="doChangeNick()">✓</button>
+      </div>
+    </div>
+    <div class="profile-section">
+      <label style="font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--cyan);letter-spacing:.15em">ESTATÍSTICAS</label>
+      <div class="profile-stats">
+        <div class="profile-stat"><div class="profile-stat-val" id="profileStatsPlayed">0</div><div class="profile-stat-lbl">PARTIDAS</div></div>
+        <div class="profile-stat"><div class="profile-stat-val" id="profileStatsWon">0</div><div class="profile-stat-lbl">VITÓRIAS</div></div>
+        <div class="profile-stat"><div class="profile-stat-val" id="profileStatsRate">0%</div><div class="profile-stat-lbl">WIN RATE</div></div>
+        <div class="profile-stat"><div class="profile-stat-val" id="profileStatsSince">—</div><div class="profile-stat-lbl">MEMBRO DESDE</div></div>
+      </div>
+    </div>
+    <div class="profile-section">
+      <label style="font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--cyan);letter-spacing:.15em;display:block;margin-bottom:8px">TROCAR SENHA</label>
+      <div class="field" style="margin-bottom:8px"><input id="cpOld" type="password" placeholder="senha atual" style="font-size:.8rem;padding:7px 10px"></div>
+      <div class="field" style="margin-bottom:8px"><input id="cpNew" type="password" placeholder="nova senha (mín. 4)" style="font-size:.8rem;padding:7px 10px"></div>
+      <div class="field" style="margin-bottom:8px"><input id="cpNew2" type="password" placeholder="confirmar nova senha" style="font-size:.8rem;padding:7px 10px" onkeydown="if(event.key==='Enter')doChangePw()"></div>
+      <button class="btn btn-primary btn-sm" onclick="doChangePw()" style="width:100%">🔑 ALTERAR SENHA</button>
+      <div class="err-msg" id="cpErr"></div>
+    </div>
+    <button class="btn btn-secondary" onclick="closeModal('modalProfile')" style="margin-top:6px">← FECHAR</button>
+  </div>
+</div>
+<div class="modal-bg" id="modalPlayerInfo">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-title">// perfil do jogador //</div>
+    <div class="player-info-header">
+      <div class="avatar avatar-lg" id="piAvatar">??</div>
+      <div>
+        <div id="piNick" style="font-family:'Orbitron',monospace;font-size:1rem;font-weight:700;color:var(--cyan)">—</div>
+      </div>
+    </div>
+    <div class="profile-stats">
+      <div class="profile-stat"><div class="profile-stat-val" id="piPlayed">0</div><div class="profile-stat-lbl">PARTIDAS</div></div>
+      <div class="profile-stat"><div class="profile-stat-val" id="piWon">0</div><div class="profile-stat-lbl">VITÓRIAS</div></div>
+      <div class="profile-stat"><div class="profile-stat-val" id="piRate">0%</div><div class="profile-stat-lbl">WIN RATE</div></div>
+      <div class="profile-stat"><div class="profile-stat-val" id="piSince">—</div><div class="profile-stat-lbl">MEMBRO DESDE</div></div>
+    </div>
+    <button class="btn btn-secondary" onclick="closeModal('modalPlayerInfo')" style="margin-top:10px">← FECHAR</button>
+  </div>
+</div>
+<div class="modal-bg" id="modalLB">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-title">// leaderboard //</div>
+    <div id="lbContent"></div>
+    <button class="btn btn-secondary" style="margin-top:14px" onclick="closeModal('modalLB')">← FECHAR</button>
+  </div>
+</div>
+<div class="modal-bg" id="modalHistory">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-title">// meu histórico //</div>
+    <div id="histContent"></div>
+    <button class="btn btn-secondary" style="margin-top:14px" onclick="closeModal('modalHistory')">← FECHAR</button>
+  </div>
+</div>
+<div class="modal-bg" id="modalRules">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-title">// regras — system breach //</div>
+    <div style="font-size:.9rem;line-height:1.78;color:var(--text)">
+      <p style="color:var(--cyan);font-size:.62rem;letter-spacing:.12em;margin-bottom:5px">OBJETIVO</p>
+      <p style="margin-bottom:13px">Seja o último com Identidades ativas e conquiste o <b style="color:var(--gold)">Acesso Root</b>.</p>
+      <p style="color:var(--cyan);font-size:.62rem;letter-spacing:.12em;margin-bottom:5px">SETUP</p>
+      <p style="margin-bottom:3px">• Cada jogador: <b>2 cartas na mão</b>, <b>2 cartas de vida</b> e <b>₵2</b></p>
+      <p style="margin-bottom:13px">• Baralho: 15 cartas — 3 de cada tipo. <b>Turno: 30 segundos</b></p>
+      <p style="color:var(--cyan);font-size:.62rem;letter-spacing:.12em;margin-bottom:5px">CARTAS</p>
+      <p style="margin-bottom:3px">🟡 <b>Admin</b> — Coleta: +₵3 | Bloqueia: Ajuda Externa</p>
+      <p style="margin-bottom:3px">🔴 <b>Trojan</b> — paga ₵3, alvo perde 1 carta do deck</p>
+      <p style="margin-bottom:3px">🟢 <b>Firewall</b> — Bloqueia: Trojan</p>
+      <p style="margin-bottom:3px">🟠 <b>Phisher</b> — Interceptação: rouba ₵2 | Bloqueia: Phishers</p>
+      <p style="margin-bottom:13px">🔵 <b>Sniffer</b> — Análise: vê 2 do topo, troca 1 (ou +₵1) | Bloqueia: Phisher</p>
+      <p style="color:var(--cyan);font-size:.62rem;letter-spacing:.12em;margin-bottom:5px">AÇÕES GERAIS</p>
+      <p style="margin-bottom:3px">• <b>Renda</b>: +₵1 (imbloqueável)</p>
+      <p style="margin-bottom:3px">• <b>Ajuda Externa</b>: +₵2 (bloqueável pelo Admin)</p>
+      <p style="margin-bottom:13px">• <b>Global Breach</b>: ₵7 — alvo perde 1 vida. +1 Carga e ₵1 ao Núcleo.</p>
+      <p style="color:var(--magenta);font-size:.62rem;letter-spacing:.12em;margin-bottom:5px">⚡ PROTOCOLO DDoS</p>
+      <p style="margin-bottom:3px">3 Cargas no Núcleo → DDoS disponível ao contestar.</p>
+      <p style="margin-bottom:3px">☢️ <b>DDoS + Duvidar</b>: perdedor <b>perde todas as vidas</b> e é eliminado (crypto volta ao banco).</p>
+      <p>Vencedor coleta TODO o Crypto do Núcleo. Núcleo reseta para 0.</p>
+    </div>
+    <button class="btn btn-secondary" style="margin-top:14px" onclick="closeModal('modalRules')">← FECHAR</button>
+  </div>
+</div>
+<div class="modal-bg" id="modalSniffer">
+  <div class="modal">
+    <div class="modal-title">// análise do sniffer //</div>
+    <p style="font-family:'Share Tech Mono',monospace;font-size:.63rem;color:var(--dim);margin-bottom:10px">1. Escolha uma carta do deck para pegar:</p>
+    <div style="display:flex;gap:11px;justify-content:center;margin-bottom:16px" id="snifferDeckCards"></div>
+    <p style="font-family:'Share Tech Mono',monospace;font-size:.63rem;color:var(--dim);margin-bottom:10px">2. Escolha qual carta da sua mão devolver:</p>
+    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:16px" id="snifferHandCards"></div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap" id="snifferActions"></div>
+  </div>
+</div>
+
+<script>
+const WS=(location.protocol==='https:'?'wss:':'ws:')+'//'+location.host;
+const IC={Admin:'🟡',Trojan:'🔴',Firewall:'🟢',Phisher:'🟠',Sniffer:'🔵'};
+const PH={action:'AGUARDANDO AÇÃO',forced_global_breach:'⚠ RASTRO DIGITAL!',block_or_contest:'BLOQUEAR/CONTESTAR',block:'BLOQUEANDO',contest:'CONTESTANDO',contest_block:'CONTESTAR BLOQUEIO',resolving_contest:'RESOLVENDO...',sniffer_choice:'SNIFFER',ended:'FIM DE JOGO'};
+const CARD_INFO={
+  Admin:'🟡 ADMIN\n\n⚡ Ação: +₵3 (Coleta)\n🛡 Bloqueia: Ajuda Externa\n\n✦ Pode ser blefado!',
+  Trojan:'🔴 TROJAN\n\n⚡ Ação: Paga ₵3 → alvo perde 1 carta\n🔒 Bloqueado por: Firewall\n\n✦ Pode ser blefado!',
+  Firewall:'🟢 FIREWALL\n\n🛡 Bloqueia: Trojan\n\n✦ Pode ser blefado!',
+  Phisher:'🟠 PHISHER\n\n⚡ Ação: Rouba ₵2 do alvo (Interceptação)\n🛡 Bloqueia: Phisher e Sniffer\n\n✦ Pode ser blefado!',
+  Sniffer:'🔵 SNIFFER\n\n⚡ Ação: Vê 2 cartas do topo, troca 1 (ou +₵1)\n🛡 Bloqueia: Phisher\n\n✦ Pode ser blefado!',
+};
+
+let ws=null,token=localStorage.getItem('sb_t')||sessionStorage.getItem('sb_t')||null;
+let myId=null,myNick=null,myRoom=null,isHost=false,gameState=null,selCard=null,targetMode=null;
+let timerInterval=null,lastRoomId=null,lastPlayers=[];
+let notifTimeout=null;
+let isSpectating=false;
+let matchTimerBase=0,matchTimerReceivedAt=0,matchTimerInterval=null;
+let respondAutoPassTimer=null,respondTimerKey=null;
+
+// ── WS ──────────────────────────────────────────────────────────────────────
+function connect(){
+  ws=new WebSocket(WS);
+  ws.onopen=()=>{
+    if(_urlSimId){
+      // Simulation spectator mode — no auth needed
+      send('spectate_sim',{simId:_urlSimId});
+    } else if(token){
+      send('auth',{token});
+    }
+  };
+  ws.onmessage=e=>handle(JSON.parse(e.data));
+  ws.onclose=()=>setTimeout(connect,2000);
+  ws.onerror=()=>ws.close();
+}
+function send(t,p={}){
+  if(ws&&ws.readyState===1){
+    ws.send(JSON.stringify({type:t,payload:p}));
+  } else if(t!=='auth'&&t!=='spectate_sim'){
+    toast('Servidor desconectado. Reconectando...','error');
+  }
+}
+
+function handle(m){
+  switch(m.type){
+    case 'authenticated':
+      myId=m.player.id;myNick=m.player.nick;
+      showScreen('menu');
+      document.getElementById('menuWelcome').textContent='// '+myNick+' //';
+      break;
+    case 'error':toast(m.message,'error');break;
+    case 'banned':clearAuth();toast('Conta banida.','error');showScreen('login');break;
+    case 'account_deleted':clearAuth();toast('Conta removida.','error');showScreen('login');break;
+    case 'room_closed':myRoom=null;toast(m.message||'Sala encerrada.','error');showScreen('menu');break;
+    case 'room_joined':myRoom=m.room;isHost=myRoom.host_id===myId;renderLobby();showScreen('lobby');break;
+    case 'room_update':myRoom=m.room;isHost=myRoom.host_id===myId;renderLobby();break;
+    case 'left_room':myRoom=null;showScreen('menu');break;
+    case 'game_started':toast('⚡ Partida iniciada!');isSpectating=false;showScreen('game');if(myRoom?.players)showDealAnimation(myRoom.players);break;
+    case 'game_state':gameState=m.state;if(targetMode&&m.state.currentPlayerId!==myId){targetMode=null;}if(!targetMode)renderGame();updateTimer(m.state);break;
+    case 'sim_state': {
+      // Simulation spectator mode — render using a synthetic game state
+      const s=m;
+      isSpectating=true;
+      // Build a fake gameState compatible with renderGame()
+      gameState={
+        players: s.players.map(p=>({
+          ...p,
+          lives: p.lives || [null,null],
+          livesRevealed: p.livesRevealed || [false,false],
+        })),
+        phase: s.phase,
+        core: s.core || {enabled:true,crypto:0,charges:0,maxCharges:3},
+        ddosAvailable: s.ddosAvailable,
+        deckSize: s.deckSize,
+        eliminatedCards: s.eliminatedCards || [],
+        currentPlayerId: s.currentPlayerId,
+        winner: s.players.find(p=>p.nick===s.winner)?.id || null,
+        waitingFor: [],
+        pendingAction: null,
+        log: s.log || [],
+        turnNumber: s.turnNumber,
+        matchDuration: s.elapsed || 0,
+        timerSeconds: null,
+        timerPlayerId: null,
+      };
+      // In sim mode, myId is the "camera" — pick first bot as the local perspective
+      if(!myId && s.players.length>0) myId=s.players[0].id;
+      renderGame();
+      // Show log entries as chat
+      break;
+    }
+    case 'notification':
+      showActionNotif(m.nick,m.action,m.type);
+      // Animate block on blocker card
+      if(m.type==='block'&&m.blockerId){setTimeout(()=>flashCard(m.blockerId,'block'),200)}
+      // Animate card reveal (player proves they have the claimed card)
+      if(m.type==='reveal'&&m.playerId){setTimeout(()=>showReveal(m.playerId,m.card),100)}
+      // Animate elimination
+      if(m.type==='eliminated'&&m.targetId){setTimeout(()=>{flashCard(m.targetId,'eliminated');const el=document.getElementById('oppcard-'+m.targetId);if(el)spawnParticles(getElCenter(el),'elim')},200)}
+      break;
+    case 'game_paused':toast(`⏸ Jogo pausado por ${m.duration}s`,'ok');break;
+    case 'game_resumed':toast('▶ Jogo retomado!','ok');const pOv=document.getElementById('pauseOverlay');if(pOv)pOv.classList.remove('active');stopPauseCountdown();break;
+    case 'pause_vote_update':toast(`⏸ Votos para pause: ${m.votes}/${m.needed}`,'');break;
+    case 'chat':appendChat(m.from,m.text);break;
+  }
+}
+
+// ── AUTH ─────────────────────────────────────────────────────────────────────
+function showScreen(n){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+n).classList.add('active');
+  // Floating settings button: hide in game screen (topbar has its own ⚙ CONFIG button)
+  const gb=document.getElementById('globalSettingsBtn');
+  if(gb) gb.style.display=n==='game'?'none':'flex';
+  document.getElementById('settingsPanel').classList.remove('open');
+  // Reapply zoom when switching screens
+  const z=parseInt(localStorage.getItem('sb_zoom')||'100');
+  if(z!==100) applyZoom(z);
+}
+async function doLogin(){
+  const nick=document.getElementById('lNick').value.trim(),pass=document.getElementById('lPass').value,rem=document.getElementById('lRem').checked;
+  document.getElementById('lErr').textContent='';
+  if(!nick||!pass){document.getElementById('lErr').textContent='Preencha nick e senha.';return}
+  try{const r=await post('/api/login',{nick,password:pass,rememberMe:rem});if(r.error){document.getElementById('lErr').textContent=r.error;return}saveToken(r.token,rem);myId=r.player.id;myNick=r.player.nick;send('auth',{token:r.token})}catch{document.getElementById('lErr').textContent='Erro de conexão.'}
+}
+async function doRegister(){
+  const nick=document.getElementById('rNick').value.trim(),pass=document.getElementById('rPass').value,pass2=document.getElementById('rPass2').value;
+  document.getElementById('rErr').textContent='';
+  if(!nick||!pass){document.getElementById('rErr').textContent='Preencha todos os campos.';return}
+  if(pass!==pass2){document.getElementById('rErr').textContent='As senhas não coincidem.';return}
+  try{const r=await post('/api/register',{nick,password:pass});if(r.error){document.getElementById('rErr').textContent=r.error;return}saveToken(r.token,false);myId=r.player.id;myNick=r.player.nick;send('auth',{token:r.token})}catch{document.getElementById('rErr').textContent='Erro de conexão.'}
+}
+async function doChangePw(){
+  const o=document.getElementById('cpOld').value,n=document.getElementById('cpNew').value,n2=document.getElementById('cpNew2').value;
+  const el=document.getElementById('cpErr');
+  if(!o||!n){el.textContent='Preencha todos os campos';return}
+  if(n!==n2){el.textContent='Senhas não conferem';return}
+  fetch('/api/change-password',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({oldPassword:o,newPassword:n})})
+    .then(r=>r.json()).then(r=>{
+      if(r.error){el.textContent=r.error;return}
+      el.textContent='';toast('Senha alterada!');
+      document.getElementById('cpOld').value='';document.getElementById('cpNew').value='';document.getElementById('cpNew2').value='';
+    }).catch(()=>{el.textContent='Erro de conexão'});
+}
+function doLogout(){clearAuth();showScreen('login')}
+function clearAuth(){token=null;localStorage.removeItem('sb_t');sessionStorage.removeItem('sb_t');myId=null;myNick=null}
+function saveToken(t,p){token=t;if(p)localStorage.setItem('sb_t',t);else sessionStorage.setItem('sb_t',t)}
+async function post(url,body,auth=false){const h={'Content-Type':'application/json'};if(auth&&token)h['Authorization']='Bearer '+token;const r=await fetch(url,{method:'POST',headers:h,body:JSON.stringify(body)});return r.json()}
+
+// ── ROOM ─────────────────────────────────────────────────────────────────────
+function doCreateRoom(){
+  const max=parseInt(document.getElementById('maxP').value)||6;
+  const pw=document.getElementById('roomPw').value.trim()||null;
+  const ddos=document.getElementById('ruleDDoS').checked;
+  send('create_room',{maxPlayers:Math.min(6,Math.max(2,max)),password:pw,rules:{ddos}});
+  closeModal('modalCreateRoom');
+  document.getElementById('roomPw').value='';
+}
+function doJoinRoom(){
+  const code=document.getElementById('joinCode').value.trim().toUpperCase();
+  const pw=document.getElementById('joinPw').value.trim()||null;
+  if(code.length!==5){toast('Código deve ter 5 caracteres','error');return}
+  send('join_room',{code,password:pw});closeModal('modalJoinRoom');
+}
+
+// ── PLAY VS BOTS ──────────────────────────────────────────────────────────────
+let pvbBots=1, pvbDiff='normal';
+const PVB_DIFF_DESC={
+  easy:'🟢 Fácil — bots passivos, erram muito, ótimo para aprender',
+  normal:'🟡 Normal — bots equilibrados, bloqueiam e contestam às vezes',
+  hard:'🔴 Difícil — bots agressivos e estratégicos, contestam bastante',
+};
+function setPvbBots(n){
+  pvbBots=n;
+  document.querySelectorAll('.pvb-bots-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('pvbB'+n).classList.add('active');
+}
+function setPvbDiff(d){
+  pvbDiff=d;
+  document.querySelectorAll('.pvb-diff-btn').forEach(b=>b.classList.remove('active'));
+  const key='pvbD'+d.charAt(0).toUpperCase()+d.slice(1);
+  const el=document.getElementById(key);if(el)el.classList.add('active');
+  document.getElementById('pvbDiffDesc').textContent=PVB_DIFF_DESC[d]||'';
+}
+function doPlayVsBots(){
+  closeModal('modalPlayVsBots');
+  const ddos=document.getElementById('pvbRuleDDoS').checked;
+  send('play_vs_bots',{botCount:pvbBots,difficulty:pvbDiff,rules:{ddos}});
+}
+function doLeaveRoom(){send('leave_room')}
+function doStartGame(){send('start_game')}
+function renderLobby(){
+  if(!myRoom)return;
+  document.getElementById('roomCodeVal').textContent=myRoom.code;
+  const lockTag=document.getElementById('roomLockTag');
+  lockTag.style.display=myRoom.hasPassword?'block':'none';
+  document.getElementById('lobbyList').innerHTML=myRoom.players.map(p=>`
+    <div class="player-item ${p.id===myRoom.host_id?'host':''}">
+      <div class="avatar avatar-sm" style="margin-right:5px">${p.avatar?'<img src="'+esc(p.avatar)+'">':esc(p.nick).substring(0,2).toUpperCase()}</div><div style="font-weight:600">${esc(p.nick)}</div>
+      ${p.id===myRoom.host_id?'<div class="host-tag">HOST</div>':''}
+    </div>`).join('');
+  // Show room rules
+  const rules=myRoom.rules||{ddos:true};
+  const rulesEl=document.getElementById('lobbyRules');
+  if(rulesEl){
+    rulesEl.textContent='';
+    const lbl=document.createElement('span');lbl.style.cssText='color:var(--cyan);letter-spacing:.12em';lbl.textContent='REGRAS: ';
+    const ddosLbl=document.createElement('span');
+    ddosLbl.style.color=rules.ddos!==false?'var(--magenta)':'var(--dim)';
+    ddosLbl.textContent=rules.ddos!==false?'☢ DDoS ATIVO':'☢ DDoS DESATIVADO';
+    rulesEl.appendChild(lbl);rulesEl.appendChild(ddosLbl);
+  }
+  document.getElementById('hostCtrl').style.display=isHost?'block':'none';
+  const sb=document.getElementById('startBtn');
+  if(myRoom.players.length<2){sb.disabled=true;sb.textContent='▶ AGUARDANDO ('+myRoom.players.length+'/'+myRoom.max_players+')'}
+  else{sb.disabled=false;sb.textContent='▶ INICIAR ('+myRoom.players.length+' jogadores)'}
+}
+
+// ── REVANCHE ─────────────────────────────────────────────────────────────────
+function doRematch(){
+  send('rematch',{roomId:lastRoomId,players:lastPlayers});
+  document.getElementById('winScreen').classList.remove('active');
+  gameState=null;selCard=null;targetMode=null;isSpectating=false;
+}
+
+// ── ZOOM ─────────────────────────────────────────────────────────────────────
+function applyZoom(val){
+  val=parseInt(val);
+  const sl=document.getElementById('zoomSlider');if(sl)sl.value=val;
+  const zv=document.getElementById('zoomVal');if(zv)zv.textContent=val+'%';
+  const s=val/100;
+  document.documentElement.style.zoom='';
+  document.documentElement.style.transform='';
+  document.documentElement.style.transformOrigin='';
+  // Scale game wrap (compensate dimensions so content fills viewport)
+  const wrap=document.getElementById('gameWrap');
+  if(wrap){
+    if(s===1){wrap.style.transform='';wrap.style.width='';wrap.style.height='';}
+    else{const pct=(100/s).toFixed(4)+'vw',pctH=(100/s).toFixed(4)+'vh';wrap.style.width=pct;wrap.style.height=pctH;wrap.style.transform='scale('+s+')';}
+  }
+  // Scale non-game screens (login, menu, lobby, etc.)
+  ['screen-login','screen-menu','screen-lobby','screen-waitroom'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    if(s===1){el.style.transform='';el.style.transformOrigin='';}
+    else{el.style.transform='scale('+s+')';el.style.transformOrigin='center center';}
+  });
+  localStorage.setItem('sb_zoom',val);
+}
+function toggleSettings(){document.getElementById('settingsPanel').classList.toggle('open')}
+
+// ── TIMER ─────────────────────────────────────────────────────────────────────
+let timerState={seconds:null,playerId:null,startedAt:null};
+function updateTimer(state){
+  const ov=document.getElementById('turnTimerOverlay');
+  const ttoLabel=document.getElementById('ttoLabel');
+  const ttoTime=document.getElementById('ttoTime');
+  const ttoBarFill=document.getElementById('ttoBarFill');
+  if(!ov){clearInterval(timerInterval);timerInterval=null;return;}
+  if(state.timerSeconds===null||state.timerSeconds===undefined||state.phase==='ended'){
+    ov.classList.remove('show');
+    clearInterval(timerInterval);timerInterval=null;return;
+  }
+  const secs=state.timerSeconds;
+  const total=state.timerTotalSeconds||45;
+  const isRespondPhase=['block_or_contest','block','contest','contest_block'].includes(state.phase);
+  const playerNick=state.players?.find(p=>p.id===state.timerPlayerId)?.nick||'?';
+  timerState={seconds:secs,playerId:state.timerPlayerId,startedAt:Date.now(),totalSeconds:total,respondPhase:isRespondPhase};
+  clearInterval(timerInterval);
+  const update=()=>{
+    const elapsed=(Date.now()-timerState.startedAt)/1000;
+    const rem=Math.max(0,timerState.seconds-elapsed);
+    const pct=(rem/(timerState.totalSeconds||45))*100;
+    const urgent=rem<=10;
+    if(timerState.respondPhase){
+      ttoLabel.textContent='⚡ Bloquear / Contestar';
+    } else {
+      ttoLabel.textContent=`⏱ Vez de ${playerNick}`;
+    }
+    ttoTime.textContent=`${Math.ceil(rem)}s`;
+    ttoBarFill.style.width=pct+'%';
+    ov.className='turn-timer-overlay show'+(urgent?' urgent':'');
+    if(rem<=0){
+      clearInterval(timerInterval);timerInterval=null;
+      if(targetMode){targetMode=null;renderGame();}
+    }
+  };
+  update();
+  timerInterval=setInterval(update,200);
+}
+
+// ── ACTION NOTIFICATION ───────────────────────────────────────────────────────
+let notifQueue=[],notifBusy=false;
+function showActionNotif(nick,action,type){
+  notifQueue.push({nick,action,type});
+  if(!notifBusy)processNotifQueue();
+}
+function processNotifQueue(){
+  if(!notifQueue.length){notifBusy=false;return}
+  notifBusy=true;
+  const {nick,action,type}=notifQueue.shift();
+  const box=document.getElementById('actionNotifBox');
+  document.getElementById('anNick').textContent=nick;
+  const actionEl=document.getElementById('anAction');
+  actionEl.textContent=action;
+  actionEl.className='an-action type-'+(type||'');
+  box.classList.add('show');
+  setTimeout(()=>{box.classList.remove('show');setTimeout(processNotifQueue,300)},2200);
+}
+
+// ── GAME RENDER ───────────────────────────────────────────────────────────────
+function renderGame(){
+  if(!gameState)return;
+  const g=gameState,me=g.players.find(p=>p.id===myId);
+  // Check if spectating (eliminated)
+  isSpectating = me ? me.eliminated : true;
+
+  // Dynamic core charge dots (3 or 4 depending on player count)
+  const maxCh = g.core?.maxCharges || 3;
+  const chEl = document.getElementById('coreCharges');
+  const ncEl = document.getElementById('nucCharges');
+  if(chEl) chEl.innerHTML = Array.from({length:maxCh},(_,i)=>`<div class="chg${i<g.core.charges?' on':''}"></div>`).join('');
+  if(ncEl) ncEl.innerHTML = Array.from({length:maxCh},(_,i)=>`<div class="nc${i<g.core.charges?' on':''}"></div>`).join('');
+
+  // Dim core chip when disabled (2-player mode)
+  const coreChipEl = document.getElementById('coreChip');
+  if(coreChipEl) coreChipEl.style.opacity = g.core.enabled===false ? '0.35' : '1';
+
+  document.getElementById('coreVal').textContent='₵'+g.core.crypto;
+  document.getElementById('nucCrypto').textContent='₵'+g.core.crypto;
+  // Show deck count with total context: "DECK: 7/15"
+  const deckEl = document.getElementById('deckLbl');
+  deckEl.textContent=`DECK: ${g.deckSize}/15`;
+  deckEl.title=`Baralho: ${g.deckSize} cartas restantes de 15 total (3 de cada tipo). Cada jogador recebeu 2 cartas no início.`;
+  document.getElementById('ddosTag').classList.toggle('on',g.ddosAvailable);
+  document.getElementById('phaseLbl').textContent=PH[g.phase]||g.phase.toUpperCase();
+
+  // Match timer — update base from server, count up locally in real-time
+  matchTimerBase=g.matchDuration||0;
+  matchTimerReceivedAt=Date.now();
+  if(!matchTimerInterval&&g.phase!=='ended'){
+    matchTimerInterval=setInterval(()=>{
+      const total=matchTimerBase+Math.floor((Date.now()-matchTimerReceivedAt)/1000);
+      const m2=Math.floor(total/60),s2=total%60;
+      const el=document.getElementById('matchTimer');
+      if(el)el.textContent=`⏱ ${m2}:${s2.toString().padStart(2,'0')}`;
+    },1000);
+  }
+  if(g.phase==='ended'&&matchTimerInterval){clearInterval(matchTimerInterval);matchTimerInterval=null;}
+  {const total=matchTimerBase,mm=Math.floor(total/60),ss=total%60;const mtEl=document.getElementById('matchTimer');if(mtEl)mtEl.textContent=`⏱ ${mm}:${ss.toString().padStart(2,'0')}`}
+
+  // Extend-turn button — only visible on my turn with ≥₵1
+  const etBtn=document.getElementById('extendTurnBtn');
+  if(etBtn) etBtn.style.display=(!isSpectating&&g.currentPlayerId===myId&&(g.phase==='action'||g.phase==='forced_global_breach')&&me&&me.crypto>=1)?'inline-flex':'none';
+
+  // Pause vote button tooltip
+  const pvBtn=document.getElementById('pauseVoteBtn');
+  if(pvBtn&&g.pauseVotes) pvBtn.title=`Votar para pausar (${g.pauseVotes.count}/${g.pauseVotes.needed})`;
+
+  renderOpponents(g,me);
+  renderActions(g,me);
+  renderLog(g.log);
+  renderEliminatedCards(g.eliminatedCards, g.deckSize);
+
+  // Pause overlay
+  const pOverlay=document.getElementById('pauseOverlay');
+  if(pOverlay){
+    if(g.paused){
+      pOverlay.classList.add('active');
+      startPauseCountdown(g.paused.secondsLeft);
+    } else {
+      pOverlay.classList.remove('active');
+      stopPauseCountdown();
+    }
+  }
+
+  if(g.phase==='ended'&&g.winner){
+    const w=g.players.find(p=>p.id===g.winner);
+    document.getElementById('winTitle').textContent=g.winner===myId?'🏆 VOCÊ VENCEU!':(w?.nick||'?')+' VENCEU';
+    document.getElementById('winSub').textContent=g.winner===myId?'ACESSO ROOT CONQUISTADO':'ACESSO ROOT NEGADO';
+    // Show rematch button (only non-spectators / all players)
+    document.getElementById('rematchBtn').style.display='block';
+    lastRoomId=g.roomId;
+    lastPlayers=g.players.map(p=>p.id);
+    document.getElementById('winScreen').classList.add('active');
+  }
+  if(g.phase==='sniffer_choice'&&g.currentPlayerId===myId&&g.pendingAction?.snifferCards)
+    showSnifferModal(g.pendingAction.snifferCards);
+}
+
+function renderOpponents(g,me){
+  const ring=document.getElementById('oppRing');ring.innerHTML='';
+  g.players.filter(p=>p.id!==myId).forEach((opp,idx)=>{
+    const isTurn=g.currentPlayerId===opp.id;
+    const canTarget=targetMode!==null&&!opp.eliminated;
+    const d=document.createElement('div');d.className='opp-seat';d.dataset.pos=idx;
+    // Cards display: hidden lives as face-down locks, dead lives as face-up revealed cards
+    const cardsHtml=opp.livesRevealed.map((rev,i)=>{
+      if(rev&&opp.lives[i]){
+        // Dead card — face-up, red, showing the card type (visible to all)
+        return `<div class="life-pip dead" data-card="${opp.lives[i]}" title="${opp.lives[i]} — eliminada"><span style="font-size:.9rem">${IC[opp.lives[i]]}</span><span class="life-pip-lbl">${opp.lives[i]}</span></div>`;
+      }
+      if(rev) return `<div class="life-pip dead">☠</div>`;
+      return `<div class="life-pip">🔒</div>`;
+    }).join('');
+    d.innerHTML=`<div class="seat-wrap${isTurn?' my-turn':''}${opp.eliminated?' out':''}${canTarget?' target':''}" id="oppcard-${opp.id}"
+      ${canTarget?`onclick="execTarget('${opp.id}')"`:''}
+    >${isTurn?'<div class="turn-arr">▼</div>':''}
+    ${!opp.connected?'<div class="off-tag">OFFLINE</div>':''}
+    <div class="seat-cards">${cardsHtml}</div>
+    <div class="seat-info" data-player-id="${esc(opp.id)}" style="cursor:pointer" title="Ver perfil">
+      <div style="display:flex;align-items:center;gap:5px;justify-content:center">
+        <div class="avatar avatar-sm">${opp.avatar?'<img src="'+esc(opp.avatar)+'">':esc(opp.nick).substring(0,2).toUpperCase()}</div>
+        <div class="opp-nick" style="color:${opp.eliminated?'var(--danger)':isTurn?'var(--cyan)':'var(--text)'}">${esc(opp.nick)}${opp.eliminated?' ☠':''}</div>
+      </div>
+      <div class="opp-crypto">${opp.eliminated?'—':'₵'+opp.crypto}</div>
+    </div>
+    </div>`;
+    ring.appendChild(d);
+  });
+  // Self seat — current player appears on the table at the bottom centre, showing their cards (lives are cards)
+  if(me){
+    const isTurn=g.currentPlayerId===myId;
+    const d=document.createElement('div');d.className='opp-seat';d.dataset.pos='self';
+    // Dead life cards — revealed face-up as full-sized dead cards (cards ARE lives; dead = flipped, visible, unusable)
+    const deadCards=me.livesRevealed.map((rev,i)=>{
+      if(!rev||!me.lives[i]) return null;
+      return me.lives[i];
+    }).filter(Boolean);
+    const deadLivesHtml=deadCards.map(c=>`<div class="self-hcard dead" data-card="${esc(c)}" title="${esc(c)} — eliminada"><div class="self-hcard-icon">${IC[c]||'☠'}</div><div class="self-hcard-lbl">${esc(c)}</div></div>`).join('');
+    // Show actual hand cards — limited so total cards (active + dead) = 2
+    const maxHand=Math.max(0,2-deadCards.length);
+    const visibleHand=(!me.eliminated&&me.hand&&me.hand.length>0)?me.hand.slice(0,maxHand):[];
+    const handHtml=visibleHand.map(c=>`<div class="self-hcard" data-card="${esc(c)}" title="Inspecionar ${esc(c)}" onclick="openCardInspect('${esc(c)}')" style="cursor:zoom-in"><div class="self-hcard-icon">${IC[c]||'?'}</div><div class="self-hcard-lbl">${esc(c)}</div></div>`).join('');
+    d.innerHTML=`<div class="seat-wrap${isTurn?' my-turn':''}${me.eliminated?' out':''}" id="oppcard-self">
+      ${isTurn?'<div class="turn-arr">▼</div>':''}
+      <div class="seat-cards">${handHtml}${deadLivesHtml}</div>
+      <div class="seat-info">
+        <div style="display:flex;align-items:center;gap:5px;justify-content:center">
+          <div class="avatar avatar-sm">${me.avatar?'<img src="'+esc(me.avatar)+'">':esc(me.nick).substring(0,2).toUpperCase()}</div>
+          <div class="opp-nick" style="color:${me.eliminated?'var(--danger)':'var(--cyan)'}">⬡ ${esc(me.nick)}${me.eliminated?' ☠':''}</div>
+        </div>
+        <div class="opp-crypto">${me.eliminated?'—':'₵'+me.crypto}</div>
+      </div>
+    </div>`;
+    ring.appendChild(d);
+  }
+}
+
+function renderActions(g,me){
+  const el=document.getElementById('actionZone');el.innerHTML='';
+  if(g.phase==='ended')return;
+  // Clear respond auto-pass if no longer waiting in a respond phase
+  const _inRespond=g.waitingFor.includes(myId)&&['block_or_contest','block','contest'].includes(g.phase);
+  if(respondTimerKey&&!_inRespond){clearTimeout(respondAutoPassTimer);respondAutoPassTimer=null;respondTimerKey=null;}
+  if(isSpectating){el.innerHTML='<div class="alert-box alert-spec">👁 Modo espectador — você foi eliminado</div>';return}
+  const myTurn=g.currentPlayerId===myId,waiting=g.waitingFor.includes(myId);
+  // DDoS contest button — shown when core is charged and player hasn't used DDoS yet
+  const canDDoS=g.ddosAvailable&&!g.myDdosUsed;
+
+  if(myTurn&&(g.phase==='action'||g.phase==='forced_global_breach')){
+    const forced=g.phase==='forced_global_breach';
+    if(forced)el.innerHTML+=`<div class="alert-box alert-danger">⚠️ RASTRO DIGITAL!</div>`;
+    if(targetMode){el.innerHTML+=`<div class="alert-box alert-warn">Clique em um oponente para atacar</div><button class="btn btn-secondary btn-sm" onclick="cancelTarget()" style="width:100%">✕ Cancelar</button>`;return}
+    let h='<div class="ag">';
+    if(!forced){
+      h+=`<button class="btn btn-secondary btn-sm" onclick="doAct('income')" title="Imbloqueável — sempre funciona">💰 Renda +₵1</button>`;
+      h+=`<button class="btn btn-secondary btn-sm" onclick="doAct('foreign_aid')" title="Bloqueável pelo Admin (pode blefar)">📡 Ajuda +₵2</button>`;
+      h+=`<button class="btn btn-secondary btn-sm" onclick="doBluff('mining')" title="Admin — Coleta ₵3. Bloqueável. Pode blefar!">⛏️ Admin [+₵3]</button>`;
+      h+=`<button class="btn btn-danger btn-sm" onclick="${me.crypto>=3?"setTarget('injection')":`toast('Precisa ₵3','error')`}" title="Trojan — Paga ₵3, alvo perde 1 carta. Bloqueável pelo Firewall. Pode blefar!">💉 Trojan [₵3]</button>`;
+      h+=`<button class="btn btn-secondary btn-sm" onclick="setTarget('intercept')" title="Phisher — Rouba ₵2 do alvo. Pode blefar!">🎣 Phisher [₵2]</button>`;
+      h+=`<button class="btn btn-secondary btn-sm" onclick="doBluff('analysis')" title="Sniffer — Vê 2 cartas do topo. Pode blefar!">🔍 Sniffer [análise]</button>`;
+    }
+    // Global Breach — always visible, disabled when < ₵7
+    if(me.crypto>=7){
+      h+=`<button class="btn btn-danger btn-sm" style="grid-column:1/-1" onclick="setTarget('global_breach')" title="Incontestável e imbloqueável">💥 Global Breach ₵7</button>`;
+    }else{
+      h+=`<button class="btn btn-secondary btn-sm" style="grid-column:1/-1;opacity:.4;cursor:not-allowed" disabled title="Precisa de ₵7 para executar">💥 Global Breach ₵7 — faltam ₵${7-me.crypto}</button>`;
+    }
+    h+='</div>';
+    h+=`<div style="font-family:'Share Tech Mono',monospace;font-size:.52rem;color:var(--dim);margin-top:4px;text-align:center;opacity:.6">🎭 você pode blefar qualquer carta</div>`;
+    el.innerHTML+=h;return;
+  }
+  if(waiting&&['block_or_contest','block','contest'].includes(g.phase)){
+    const act=g.pendingAction,actor=g.players.find(p=>p.id===act.actorId),bcs=blockCards(act.type);
+    const rKey=g.phase+'_'+(act.actorId||'');
+    if(respondTimerKey!==rKey){
+      respondTimerKey=rKey;
+      clearTimeout(respondAutoPassTimer);respondAutoPassTimer=null;
+      let rem=15;
+      const tick=()=>{
+        rem--;
+        const cd=document.getElementById('respondCountdown');
+        if(cd)cd.textContent=`auto-passa em ${rem}s`;
+        if(rem<=0){clearTimeout(respondAutoPassTimer);respondAutoPassTimer=null;respondTimerKey=null;respond('pass');}
+        else respondAutoPassTimer=setTimeout(tick,1000);
+      };
+      respondAutoPassTimer=setTimeout(tick,1000);
+    }
+    el.innerHTML+=`<div class="alert-box alert-warn">⚡ ${esc(actor?.nick||'?')} → ${actName(act.type)}</div>`;
+    let h='<div class="ag"><button class="btn btn-secondary btn-sm" onclick="respond(\'pass\')">✓ Passar</button>'+(g.phase!=='block'?'<button class="btn btn-danger btn-sm" onclick="respond(\'contest\')">⚠️ Duvidar!</button>':'');
+    bcs.forEach(c=>{h+=`<button class="btn btn-gold btn-sm" onclick="respond('block','${c}')" title="Declara ${c} para bloquear — pode blefar!">🛡️ Bloquear [${c}]</button>`});
+    if(canDDoS&&g.phase!=='block'){
+      h+=`<button class="btn btn-magenta btn-sm" style="grid-column:1/-1" onclick="respondDDoS()" title="☢️ Duvidar com DDoS — perdedor é eliminado completamente!">☢️ DDoS + Duvidar! (elimina perdedor)</button>`;
+    }
+    h+=`</div><div id="respondCountdown" style="font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim);text-align:center;margin-top:3px">auto-passa em 15s</div>`;
+    el.innerHTML+=h;return;
+  }
+  if(myTurn&&g.phase==='contest_block'){
+    const bl=g.players.find(p=>p.id===g.pendingBlock?.blockerId);
+    let h=`<div class="alert-box alert-warn">🛡️ ${esc(bl?.nick||'?')} bloqueou [${g.pendingBlock?.card}]</div>
+      <div class="ag"><button class="btn btn-secondary btn-sm" onclick="send('game_respond_block',{type:'pass'})">✓ Aceitar</button>
+      <button class="btn btn-danger btn-sm" onclick="send('game_respond_block',{type:'contest'})">⚠️ Contestar</button>`;
+    if(canDDoS){
+      h+=`<button class="btn btn-magenta btn-sm" style="grid-column:1/-1" onclick="send('game_respond_block',{type:'contest',useDDoS:true})" title="☢️ Contestar com DDoS — perdedor é eliminado!">☢️ DDoS + Contestar!</button>`;
+    }
+    h+=`</div>`;
+    el.innerHTML=h;return;
+  }
+  if(!myTurn&&!waiting){
+    const curr=g.players.find(p=>p.id===g.currentPlayerId);
+    el.innerHTML=`<div class="alert-box alert-wait">Aguardando ${esc(curr?.nick||'?')}…</div>`;
+  }
+}
+
+// ── ANIMATION ENGINE ─────────────────────────────────────────────────────────
+function getElCenter(el){
+  const r=el.getBoundingClientRect();
+  return{x:r.left+r.width/2,y:r.top+r.height/2};
+}
+
+function flashCard(playerId, type){
+  const el=document.getElementById('oppcard-'+playerId);
+  if(!el)return;
+  el.classList.remove('attack-flash','block-flash','elim-flash');
+  void el.offsetWidth;
+  if(type==='attack'||type==='injection'||type==='global_breach'){
+    el.classList.add('attack-flash');
+  } else if(type==='block'){
+    el.classList.add('block-flash');
+  } else if(type==='eliminated'){
+    el.classList.add('elim-flash');
+    setTimeout(()=>spawnParticles(getElCenter(el),'elim'),100);
+  }
+}
+
+function showReveal(playerId, card){
+  const el=document.getElementById('oppcard-'+playerId);
+  if(!el)return;
+  // Remove any existing reveal overlay
+  const old=el.querySelector('.reveal-overlay');
+  if(old)old.remove();
+  const ov=document.createElement('div');
+  ov.className='reveal-overlay';
+  const iconEl=document.createElement('div');
+  iconEl.className='reveal-overlay-icon';
+  iconEl.textContent=IC[card]||'?';
+  const lblEl=document.createElement('div');
+  lblEl.className='reveal-overlay-lbl';
+  lblEl.textContent=card||'';
+  ov.appendChild(iconEl);
+  ov.appendChild(lblEl);
+  el.appendChild(ov);
+  // Remove after animation completes
+  setTimeout(()=>ov.remove(),2700);
+}
+
+function launchProjectile(fromEl, toEl, type){
+  if(!fromEl||!toEl) return;
+  const canvas=document.getElementById('animCanvas');
+  const ctx=canvas.getContext('2d');
+  canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+  const from=getElCenter(fromEl), to=getElCenter(toEl);
+  const colors={injection:'#ff1744',global_breach:'#ff00ff',intercept:'#ff9100',mining:'#ffd600',foreign_aid:'#00e676'};
+  const col=colors[type]||'#00f5ff';
+  const emojis={injection:'💉',global_breach:'💥',intercept:'🎣',mining:'⛏️',foreign_aid:'📡'};
+  const emoji=emojis[type]||'⚡';
+  let t=0; const dur=28;
+  function lerp(a,b,t){return a+(b-a)*t}
+  function easeInOut(t){return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2}
+  function step(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    if(t>=dur){ctx.clearRect(0,0,canvas.width,canvas.height);return}
+    const p=easeInOut(t/dur);
+    const x=lerp(from.x,to.x,p), y=lerp(from.y,to.y,p)-Math.sin(p*Math.PI)*40;
+    // trail
+    ctx.save();
+    const grd=ctx.createLinearGradient(from.x,from.y,x,y);
+    grd.addColorStop(0,'transparent'); grd.addColorStop(1,col+'88');
+    ctx.strokeStyle=grd; ctx.lineWidth=3; ctx.shadowBlur=10; ctx.shadowColor=col;
+    ctx.beginPath(); ctx.moveTo(from.x,from.y); ctx.lineTo(x,y); ctx.stroke();
+    ctx.restore();
+    // emoji projectile
+    ctx.save();
+    ctx.font=`${22+Math.sin(p*Math.PI)*6}px serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.globalAlpha=0.9+Math.sin(t/3)*0.1;
+    ctx.fillText(emoji,x,y);
+    ctx.restore();
+    t++; requestAnimationFrame(step);
+  }
+  step();
+}
+
+function spawnParticles(center, type){
+  const canvas=document.getElementById('animCanvas');
+  const ctx=canvas.getContext('2d');
+  canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+  const colors={elim:['#ff1744','#ff6b6b','#ff0000','#ffcc00'],block:['#00e676','#69f0ae','#00c853'],ddos:['#ff00ff','#e040fb','#ce93d8','#00f5ff']};
+  const cols=colors[type]||colors.elim;
+  const particles=Array.from({length:28},()=>({
+    x:center.x, y:center.y,
+    vx:(Math.random()-0.5)*12, vy:(Math.random()-0.5)*12-4,
+    r:Math.random()*5+3, life:1,
+    col:cols[Math.floor(Math.random()*cols.length)],
+    rot:Math.random()*Math.PI*2
+  }));
+  let frame=0;
+  function step(){
+    if(frame>45){ctx.clearRect(0,0,canvas.width,canvas.height);return}
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p=>{
+      p.x+=p.vx; p.y+=p.vy; p.vy+=0.4; p.life-=0.025; p.rot+=0.15;
+      if(p.life<=0)return;
+      ctx.save(); ctx.globalAlpha=p.life;
+      ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+      ctx.fillStyle=p.col; ctx.shadowBlur=8; ctx.shadowColor=p.col;
+      ctx.beginPath(); ctx.rect(-p.r/2,-p.r/2,p.r,p.r); ctx.fill();
+      ctx.restore();
+    });
+    frame++; requestAnimationFrame(step);
+  }
+  step();
+}
+
+function doAct(t){send('game_action',{type:t})}
+function doCardAct(t,fb){send('game_action',{type:t,card:fb});selCard=null}
+// doBluff: declare action without needing the card in hand (bluff!)
+function doBluff(t){
+  const cardMap={mining:'Admin',analysis:'Sniffer',injection:'Trojan',intercept:'Phisher'};
+  send('game_action',{type:t,card:cardMap[t]||t});
+  selCard=null;
+}
+function setTarget(t){targetMode=t;renderGame()}
+function cancelTarget(){targetMode=null;renderGame()}
+function execTarget(tid){
+  if(!targetMode)return;
+  // Always declare the card for the action — bluff allowed, no hand check
+  const cm={injection:'Trojan',intercept:'Phisher',global_breach:null};
+  const fromEl=document.getElementById('oppcard-self');
+  const toEl=document.getElementById('oppcard-'+tid);
+  launchProjectile(fromEl,toEl,targetMode);
+  setTimeout(()=>flashCard(tid,targetMode),380);
+  send('game_action',{type:targetMode,targetId:tid,card:cm[targetMode]});
+  targetMode=null;selCard=null;
+}
+function selCardFn(i){selCard=selCard===i?null:i;renderGame()}
+function respond(t,c=null){
+  // Clear auto-pass timer on any manual or auto response
+  clearTimeout(respondAutoPassTimer);respondAutoPassTimer=null;respondTimerKey=null;
+  send('game_respond',c?{type:t,card:c}:{type:t});
+}
+function respondDDoS(){
+  // DDoS + Contest — escalated contestation
+  clearTimeout(respondAutoPassTimer);respondAutoPassTimer=null;respondTimerKey=null;
+  send('game_respond',{type:'contest',useDDoS:true});
+}
+let snifferSelectedDeck=null,snifferSelectedHand=null;
+function showSnifferModal(topCards){
+  snifferSelectedDeck=null;snifferSelectedHand=null;
+  const me=gameState?.players?.find(p=>p.id===myId);
+  const hand=me?.hand||[];
+  document.getElementById('snifferDeckCards').innerHTML=topCards.map((c,i)=>
+    `<div class="gcard ${c}" data-card="${c}" ${cardImages[c]?'data-has-img':''} id="sdc-${i}" onclick="selectSnifferDeck(${i})" style="cursor:pointer">
+      ${cardImages[c]?'':`<div class="ci">${IC[c]}</div><div class="cl">${c}<br><span style="font-size:.4rem;color:var(--dim)">#${i+1}</span></div>`}
+    </div>`).join('');
+  document.getElementById('snifferHandCards').innerHTML=hand.map((c,i)=>
+    `<div class="gcard ${c}" data-card="${c}" ${cardImages[c]?'data-has-img':''} id="shc-${i}" onclick="selectSnifferHand(${i})" style="cursor:pointer">
+      ${cardImages[c]?'':`<div class="ci">${IC[c]}</div><div class="cl">${c}</div>`}
+    </div>`).join('');
+  document.getElementById('snifferActions').innerHTML=
+    `<button id="snifferConfirmBtn" class="btn btn-primary btn-sm" disabled onclick="confirmSnifferSwap()">✓ Trocar</button>`+
+    `<button class="btn btn-gold btn-sm" onclick="send('sniffer_choice',{swap:false});closeModal('modalSniffer')">Não trocar (+₵1)</button>`;
+  openModal('modalSniffer');
+}
+function selectSnifferDeck(i){
+  snifferSelectedDeck=i;
+  document.querySelectorAll('[id^="sdc-"]').forEach(el=>el.classList.remove('sel'));
+  const el=document.getElementById('sdc-'+i);if(el)el.classList.add('sel');
+  updateSnifferConfirm();
+}
+function selectSnifferHand(i){
+  snifferSelectedHand=i;
+  document.querySelectorAll('[id^="shc-"]').forEach(el=>el.classList.remove('sel'));
+  const el=document.getElementById('shc-'+i);if(el)el.classList.add('sel');
+  updateSnifferConfirm();
+}
+function updateSnifferConfirm(){
+  const btn=document.getElementById('snifferConfirmBtn');
+  if(btn)btn.disabled=!(snifferSelectedDeck!==null&&snifferSelectedHand!==null);
+}
+function confirmSnifferSwap(){
+  if(snifferSelectedDeck===null||snifferSelectedHand===null)return;
+  send('sniffer_choice',{swap:true,deckCardIndex:snifferSelectedDeck,handCardIndex:snifferSelectedHand});
+  closeModal('modalSniffer');
+  snifferSelectedDeck=null;snifferSelectedHand=null;
+}
+function blockCards(t){return{foreign_aid:['Admin'],injection:['Firewall'],intercept:['Sniffer','Phisher'],mining:[],analysis:[]}[t]||[]}
+function actName(t){return{foreign_aid:'Ajuda Externa',injection:'Trojan [Hack]',mining:'Admin [+₵3]',intercept:'Phisher [Interceptação]',analysis:'Sniffer [Análise]',global_breach:'Global Breach',income:'Renda'}[t]||t}
+function renderEliminatedCards(cards, deckSize){
+  const el=document.getElementById('elimCardsPanel');if(!el)return;
+  const CTYPES=['Admin','Trojan','Firewall','Phisher','Sniffer'];
+  // Count how many of each type have been eliminated
+  const elimCount={};CTYPES.forEach(c=>elimCount[c]=0);
+  (cards||[]).forEach(c=>{if(elimCount[c]!==undefined)elimCount[c]++;});
+
+  // Eliminated cards row
+  let html='<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px">';
+  if(!cards||cards.length===0){
+    html+='<span style="font-family:\'Share Tech Mono\',monospace;font-size:.52rem;color:var(--dim)">—</span>';
+  } else {
+    html+=cards.map(c=>`<div class="gcard ${c}" data-card="${c}" style="width:34px;height:46px;cursor:default;flex-shrink:0"><div style="font-size:.8rem">${IC[c]||'?'}</div><div style="font-family:'Orbitron',monospace;font-size:.25rem;text-align:center;padding:0 2px;color:var(--dim)">${c}</div></div>`).join('');
+  }
+  html+='</div>';
+
+  // Deck remaining count + per-type breakdown
+  html+=`<div style="width:100%;border-top:1px solid rgba(0,245,255,.07);padding-top:5px;margin-top:2px">`;
+  html+=`<div style="font-family:'Share Tech Mono',monospace;font-size:.52rem;color:var(--cyan);margin-bottom:4px">DECK: ${deckSize??'?'} cartas</div>`;
+  html+=`<div style="display:flex;flex-wrap:wrap;gap:4px">`;
+  CTYPES.forEach(c=>{
+    const rem=3-elimCount[c];
+    const dimmed=rem===0;
+    html+=`<div title="${esc(c)}: ${rem} restante(s)" style="display:flex;align-items:center;gap:2px;font-family:'Share Tech Mono',monospace;font-size:.52rem;${dimmed?'opacity:.3;text-decoration:line-through':''}"><span>${IC[c]}</span><span style="color:var(--dim)">×${rem}</span></div>`;
+  });
+  html+=`</div></div>`;
+
+  el.innerHTML=html;
+}
+
+let pauseCountdownInterval=null;
+function startPauseCountdown(seconds){
+  stopPauseCountdown();
+  let rem=Math.max(0,seconds);
+  const el=document.getElementById('pauseCountdown');
+  if(el)el.textContent=rem;
+  pauseCountdownInterval=setInterval(()=>{rem--;if(el)el.textContent=Math.max(0,rem);if(rem<=0)stopPauseCountdown();},1000);
+}
+function stopPauseCountdown(){if(pauseCountdownInterval){clearInterval(pauseCountdownInterval);pauseCountdownInterval=null;}}
+
+function doExtendTurn(){send('extend_turn');}
+function doVotePause(){send('vote_pause');toast('Voto para pause registrado','ok');}
+
+// ── CARD DEAL ANIMATION ───────────────────────────────────────────────────────
+function showDealAnimation(players){
+  if(!players||players.length===0)return;
+  const overlay=document.createElement('div');
+  overlay.id='dealOverlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:900;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;backdrop-filter:blur(4px)';
+  overlay.innerHTML=`<div style="font-family:'Orbitron',monospace;font-size:1rem;font-weight:900;color:var(--cyan);letter-spacing:.25em;margin-bottom:24px;text-shadow:0 0 18px var(--cyan)">DISTRIBUINDO CARTAS</div><div id="dealCards" style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap"></div>`;
+  document.body.appendChild(overlay);
+  const dCards=document.getElementById('dealCards');
+  if(!dCards){overlay.remove();return;}
+  players.forEach((p,i)=>{
+    const c=document.createElement('div');
+    c.style.cssText=`width:46px;height:64px;background:rgba(0,245,255,.05);border:1px solid rgba(0,245,255,.35);border-radius:5px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:.55rem;color:var(--cyan);opacity:0;transform:translateY(-32px) scale(.75);transition:all .4s cubic-bezier(.34,1.56,.64,1) ${i*0.22}s`;
+    c.innerHTML=`<div style="font-size:.9rem">🃏</div><div style="margin-top:4px;font-size:.42rem;opacity:.7">${esc(p.nick?.[0]?.toUpperCase()||'?')}</div>`;
+    dCards.appendChild(c);
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{c.style.opacity='1';c.style.transform='translateY(0) scale(1)';}));
+  });
+  const total=600+players.length*220+800;
+  setTimeout(()=>{overlay.style.transition='opacity .5s';overlay.style.opacity='0';setTimeout(()=>overlay.remove(),500);},total);
+}
+
+function renderLog(logs){
+  const el=document.getElementById('gameLog');
+  el.innerHTML=logs.map(l=>{let c='';if(l.includes('🏆')||l.includes('ROOT'))c='good';else if(l.includes('☠')||l.includes('💀')||l.includes('❌')||l.includes('DDoS'))c='bad';else if(l.includes('⚡')||l.includes('✅')||l.includes('⛏'))c='hi';return`<div class="log-ln ${c}">${esc(l)}</div>`}).join('');
+  el.scrollTop=el.scrollHeight;
+}
+function appendChat(from,text){const el=document.getElementById('chatMsgs');const d=document.createElement('div');d.className='chat-msg';d.innerHTML=`<span class="from">${esc(from)}</span>: ${esc(text)}`;el.appendChild(d);el.scrollTop=el.scrollHeight}
+function sendChat(){const inp=document.getElementById('chatInp');const t=inp.value.trim();if(!t)return;send('chat',{text:t});inp.value=''}
+function returnMenu(){document.getElementById('winScreen').classList.remove('active');gameState=null;targetMode=null;selCard=null;isSpectating=false;showScreen('menu')}
+
+// ── LEADERBOARD ───────────────────────────────────────────────────────────────
+async function showLeaderboard(){
+  openModal('modalLB');
+  document.getElementById('lbContent').innerHTML='<p style="font-family:\'Share Tech Mono\',monospace;font-size:.65rem;color:var(--dim)">Carregando…</p>';
+  try{
+    const data=await(await fetch('/api/leaderboard')).json();
+    if(!data.length){document.getElementById('lbContent').innerHTML='<p style="font-family:\'Share Tech Mono\',monospace;font-size:.65rem;color:var(--dim)">Nenhum dado ainda.</p>';return}
+    document.getElementById('lbContent').innerHTML=`<table class="hist-table"><thead><tr><th>#</th><th>Nick</th><th>Vitórias</th><th>Partidas</th></tr></thead><tbody>${data.map((p,i)=>`<tr class="${i===0?'won-row':''}"><td>${i+1}</td><td>${esc(p.nick)}</td><td style="color:var(--green)">${p.games_won}</td><td>${p.games_played}</td></tr>`).join('')}</tbody></table>`;
+  }catch{document.getElementById('lbContent').innerHTML='<p style="color:var(--danger)">Erro ao carregar.</p>'}
+}
+
+// ── HISTORY ───────────────────────────────────────────────────────────────────
+async function showHistory(){
+  openModal('modalHistory');
+  document.getElementById('histContent').innerHTML='<p style="font-family:\'Share Tech Mono\',monospace;font-size:.65rem;color:var(--dim)">Carregando…</p>';
+  try{
+    const h=document.getElementById('histContent');
+    const [hist,me]=await Promise.all([
+      fetch('/api/my-history',{headers:{'Authorization':'Bearer '+token}}).then(r=>r.json()),
+      fetch('/api/me',{headers:{'Authorization':'Bearer '+token}}).then(r=>r.json()),
+    ]);
+    if(hist.error){h.innerHTML='<p style="color:var(--danger)">Erro.</p>';return}
+    const stats=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px">
+      <div style="text-align:center;background:rgba(0,245,255,.04);border:1px solid var(--border);border-radius:4px;padding:12px">
+        <div style="font-family:'Orbitron',monospace;font-size:1.5rem;color:var(--cyan)">${me.games_played||0}</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim)">PARTIDAS</div>
+      </div>
+      <div style="text-align:center;background:rgba(255,214,0,.04);border:1px solid rgba(255,214,0,.2);border-radius:4px;padding:12px">
+        <div style="font-family:'Orbitron',monospace;font-size:1.5rem;color:var(--gold)">${me.games_won||0}</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim)">VITÓRIAS</div>
+      </div>
+      <div style="text-align:center;background:rgba(0,230,118,.04);border:1px solid rgba(0,230,118,.2);border-radius:4px;padding:12px">
+        <div style="font-family:'Orbitron',monospace;font-size:1.5rem;color:var(--green)">${me.games_played>0?Math.round((me.games_won/me.games_played)*100):0}%</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim)">WIN RATE</div>
+      </div>
+    </div>`;
+    if(!hist.length){h.innerHTML=stats+'<p style="font-family:\'Share Tech Mono\',monospace;font-size:.65rem;color:var(--dim);text-align:center">Nenhuma partida registrada ainda.</p>';return}
+    h.innerHTML=stats+`<table class="hist-table"><thead><tr><th>Data</th><th>Vencedor</th><th>Jogadores</th><th>Duração</th></tr></thead><tbody>${hist.map(g=>{
+      const isWin=g.winner_id===myId;
+      const dur=g.duration_seconds>0?Math.floor(g.duration_seconds/60)+'m'+((g.duration_seconds%60)+'s'):'—';
+      return`<tr class="${isWin?'won-row':''}"><td>${fmtDate(g.played_at)}</td><td>${isWin?'🏆 '+esc(g.winner_nick||'?'):esc(g.winner_nick||'?')}</td><td>${g.player_count}</td><td>${dur}</td></tr>`;
+    }).join('')}</tbody></table>`;
+  }catch{document.getElementById('histContent').innerHTML='<p style="color:var(--danger)">Erro ao carregar.</p>'}
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+function openModal(id){
+  if(id==='modalProfile') loadProfile();
+  document.getElementById(id).classList.add('active');
+  if(id==='modalPlayVsBots'){setPvbBots(pvbBots);setPvbDiff(pvbDiff);}
+}
+function closeModal(id){document.getElementById(id).classList.remove('active')}
+document.addEventListener('click',e=>{if(e.target.classList.contains('modal-bg'))e.target.classList.remove('active')});
+function showRules(){openModal('modalRules')}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+function toast(msg,type=''){const c=document.getElementById('toastWrap');const el=document.createElement('div');el.className='toast '+type;el.textContent=msg;c.appendChild(el);setTimeout(()=>el.remove(),3200)}
+
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function fmtDate(d){if(!d)return'—';try{return new Date(d).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}catch{return d}}
+
+// ── TOOLTIP ───────────────────────────────────────────────────────────────────
+(function(){
+  const tip=document.getElementById('tooltip');
+  if(!tip)return;
+  function positionTooltip(e){
+    const x=e.clientX+16,y=e.clientY+12;
+    const tw=tip.offsetWidth,th=tip.offsetHeight;
+    tip.style.left=Math.min(x,window.innerWidth-tw-8)+'px';
+    tip.style.top=Math.min(y,window.innerHeight-th-8)+'px';
+  }
+  document.addEventListener('mouseover',e=>{
+    const card=e.target.closest('[data-card]');
+    if(!card){tip.classList.remove('visible');return}
+    const info=CARD_INFO[card.dataset.card];
+    if(!info)return;
+    tip.textContent=info;
+    tip.classList.add('visible');
+    positionTooltip(e);
+  });
+  document.addEventListener('mousemove',e=>{
+    if(!tip.classList.contains('visible'))return;
+    positionTooltip(e);
+  });
+  document.addEventListener('mouseout',e=>{
+    const card=e.target.closest('[data-card]');
+    if(card&&!card.contains(e.relatedTarget))tip.classList.remove('visible');
+  });
+})();
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+// Detect ?sim=<simId> to enter simulation spectator mode
+const _urlSimId = new URLSearchParams(location.search).get('sim');
+
+connect();
+// Init zoom after DOM fully ready
+window.addEventListener('DOMContentLoaded',()=>{
+  const savedZoom=parseInt(localStorage.getItem('sb_zoom')||'100');
+  const sl=document.getElementById('zoomSlider');
+  const zv=document.getElementById('zoomVal');
+  if(sl) sl.value=savedZoom;
+  if(zv) zv.textContent=savedZoom+'%';
+  applyZoom(savedZoom);
+
+  // Apply saved theme
+  applyTheme(localStorage.getItem('sb_theme')||'default');
+
+  // Load custom card images
+  loadCardImages();
+
+  // Delegated click handler for opponent profile info
+  document.addEventListener('click', e => {
+    const seatInfo = e.target.closest('.seat-info[data-player-id]');
+    if (seatInfo) showPlayerInfo(seatInfo.dataset.playerId);
+  });
+
+  // If opened as simulation spectator, switch straight to game screen
+  if(_urlSimId){
+    document.getElementById('globalSettingsBtn').classList.add('hidden-in-sim');
+    showScreen('game');
+  }
+});
+
+// ── THEMES ────────────────────────────────────────────────────────────────────
+function applyTheme(id){
+  document.documentElement.dataset.theme=id==='default'?'':id;
+  localStorage.setItem('sb_theme',id);
+  document.querySelectorAll('.theme-btn').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('theme-'+id);
+  if(btn)btn.classList.add('active');
+}
+
+// ── CARD IMAGES ───────────────────────────────────────────────────────────────
+let cardImages={};
+async function loadCardImages(){
+  try{
+    const res=await fetch('/api/card-images');
+    const data=await res.json();
+    cardImages=data;
+    applyCardImageStyles();
+  }catch(e){cardImages={};}
+}
+function applyCardImageStyles(){
+  // Inject or update a <style> tag with card image backgrounds
+  let s=document.getElementById('cardImgStyle');
+  if(!s){s=document.createElement('style');s.id='cardImgStyle';document.head.appendChild(s);}
+  const rules=[];
+  for(const [type,url] of Object.entries(cardImages)){
+    if(!url)continue;
+    if(type==='Back'){
+      // Used on opponent card backs (life-pip slots that aren't revealed)
+      rules.push(`.life-pip:not(.dead)[data-card-back]{background-image:url('${url}');background-size:cover;background-position:center;}`);
+    } else {
+      // Used on .gcard and .self-hcard elements
+      rules.push(`.gcard.${type}[data-has-img]{background-image:url('${url}');background-size:cover;background-position:center;}`);
+      rules.push(`.self-hcard[data-card="${type}"]{background-image:url('${url}');background-size:cover;background-position:center;background-color:transparent;}`);
+      rules.push(`.self-hcard[data-card="${type}"] .self-hcard-icon,.self-hcard[data-card="${type}"] .self-hcard-lbl{display:none;}`);
+    }
+  }
+  s.textContent=rules.join('\n');
+}
+
+// ── CARD INSPECT ──────────────────────────────────────────────────────────────
+let _inspectRAF=null;
+const CARD_INSPECT_MAX_TILT=18; // degrees of 3D tilt on mouse movement
+function openCardInspect(cardType){
+  const ov=document.getElementById('cardInspectOverlay');
+  const inner=document.getElementById('cardInspectInner');
+  const nameEl=document.getElementById('cardInspectName');
+  const url=cardImages[cardType];
+  if(url){
+    inner.className='card-inspect-inner has-img';
+    inner.innerHTML=`<img src="${url}" alt="${esc(cardType)}" draggable="false">`;
+  } else {
+    inner.className='card-inspect-inner no-img';
+    inner.innerHTML=`<div class="card-inspect-no-img-icon">${IC[cardType]||'🃏'}</div><div class="card-inspect-no-img-label">${esc(cardType)}</div>`;
+  }
+  nameEl.textContent=cardType;
+  ov.classList.add('open');
+  // 3D tilt on mousemove
+  const wrap=document.getElementById('cardInspectWrap');
+  const onMove=e=>{
+    const rect=inner.getBoundingClientRect();
+    const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+    const dx=(e.clientX-cx)/(rect.width/2),dy=(e.clientY-cy)/(rect.height/2);
+    const rx=(-dy*CARD_INSPECT_MAX_TILT).toFixed(2),ry=(dx*CARD_INSPECT_MAX_TILT).toFixed(2);
+    wrap.style.transform=`rotateX(${rx}deg) rotateY(${ry}deg)`;
+  };
+  ov._moveHandler=onMove;
+  ov.addEventListener('mousemove',onMove);
+  // Keyboard close
+  const onKey=e=>{if(e.key==='Escape'){closeCardInspect(null);}};
+  ov._keyHandler=onKey;
+  document.addEventListener('keydown',onKey);
+}
+function closeCardInspect(e){
+  const isClickOutside=e&&e.target===document.getElementById('cardInspectOverlay');
+  if(e&&!isClickOutside)return;
+  const ov=document.getElementById('cardInspectOverlay');
+  ov.classList.remove('open');
+  if(ov._moveHandler){ov.removeEventListener('mousemove',ov._moveHandler);delete ov._moveHandler;}
+  if(ov._keyHandler){document.removeEventListener('keydown',ov._keyHandler);delete ov._keyHandler;}
+  const wrap=document.getElementById('cardInspectWrap');
+  wrap.style.transform='';
+}
+
+// ── PROFILE ────────────────────────────────────────────────────────────────
+let myAvatar=null;
+function loadProfile(){
+  fetch('/api/me',{headers:{Authorization:'Bearer '+token}}).then(r=>r.json()).then(p=>{
+    myAvatar=p.avatar||null;
+    document.getElementById('profileAvatar').innerHTML=p.avatar?'<img src="'+esc(p.avatar)+'">':esc(p.nick).substring(0,2).toUpperCase();
+    document.getElementById('profileNickInput').value=p.nick;
+    document.getElementById('profileStatsPlayed').textContent=p.games_played||0;
+    document.getElementById('profileStatsWon').textContent=p.games_won||0;
+    const rate=p.games_played>0?Math.round((p.games_won/p.games_played)*100):0;
+    document.getElementById('profileStatsRate').textContent=rate+'%';
+    document.getElementById('profileStatsSince').textContent=p.created_at?new Date(p.created_at+'Z').toLocaleDateString('pt-BR'):'—';
+  }).catch(()=>{});
+}
+function doChangeNick(){
+  const newNick=document.getElementById('profileNickInput').value.trim();
+  if(!newNick){toast('Digite um nick','error');return}
+  fetch('/api/change-nick',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({newNick})})
+    .then(r=>r.json()).then(r=>{
+      if(r.error){toast(r.error,'error');return}
+      myNick=newNick;
+      document.getElementById('menuWelcome').textContent='// '+myNick+' //';
+      toast('Nick alterado!');
+      loadProfile();
+    }).catch(()=>toast('Erro ao trocar nick','error'));
+}
+function doUploadAvatar(){
+  document.getElementById('avatarFileInput').click();
+}
+function handleAvatarFile(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const img=new Image();
+    img.onload=function(){
+      const canvas=document.createElement('canvas');
+      const MAX=128;
+      let w=img.width,h=img.height;
+      if(w>h){h=Math.round(h*MAX/w);w=MAX}else{w=Math.round(w*MAX/h);h=MAX}
+      canvas.width=w;canvas.height=h;
+      const ctx=canvas.getContext('2d');
+      ctx.drawImage(img,0,0,w,h);
+      canvas.toBlob(function(blob){
+        if(!blob)return;
+        const fd=new FormData();fd.append('avatar',blob,'avatar.jpeg');
+        fetch('/api/avatar',{method:'POST',headers:{Authorization:'Bearer '+token},body:fd})
+          .then(r=>r.json()).then(r=>{
+            if(r.error){toast(r.error,'error');return}
+            myAvatar=r.avatar;
+            document.getElementById('profileAvatar').innerHTML='<img src="'+esc(r.avatar)+'">';
+            toast('Avatar atualizado!');
+          }).catch(()=>toast('Erro ao enviar avatar','error'));
+      },'image/jpeg',0.7);
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+  input.value='';
+}
+function doRemoveAvatar(){
+  fetch('/api/avatar',{method:'DELETE',headers:{Authorization:'Bearer '+token}})
+    .then(r=>r.json()).then(r=>{
+      if(r.error){toast(r.error,'error');return}
+      myAvatar=null;
+      document.getElementById('profileAvatar').innerHTML=esc(myNick||'?').substring(0,2).toUpperCase();
+      toast('Avatar removido');
+    }).catch(()=>toast('Erro','error'));
+}
+function showPlayerInfo(playerId){
+  if(!playerId)return;
+  fetch('/api/player/'+encodeURIComponent(playerId),{headers:{Authorization:'Bearer '+token}}).then(r=>r.json()).then(p=>{
+    if(p.error){toast(p.error,'error');return}
+    const rate=p.games_played>0?Math.round((p.games_won/p.games_played)*100):0;
+    document.getElementById('piAvatar').innerHTML=p.avatar?'<img src="'+esc(p.avatar)+'">':esc(p.nick).substring(0,2).toUpperCase();
+    document.getElementById('piNick').textContent=p.nick;
+    document.getElementById('piPlayed').textContent=p.games_played||0;
+    document.getElementById('piWon').textContent=p.games_won||0;
+    document.getElementById('piRate').textContent=rate+'%';
+    document.getElementById('piSince').textContent=p.created_at?new Date(p.created_at+'Z').toLocaleDateString('pt-BR'):'—';
+    openModal('modalPlayerInfo');
+  }).catch(()=>toast('Erro ao carregar perfil','error'));
+}
+function confirmLeaveGame(){
+  if(gameState && gameState.phase !== 'ended'){
+    if(!confirm('Sair da partida? Você pode perder a partida.'))return;
+  }
+  send('leave_room');
+}
+</script>
+<!-- GLOBAL SETTINGS BUTTON (always visible) -->
+<button id="globalSettingsBtn" onclick="toggleSettings()" title="Configurações" style="
+  position:fixed;top:10px;right:14px;z-index:9400;
+  background:rgba(2,6,14,.92);border:1px solid rgba(0,245,255,.25);border-radius:50%;
+  width:34px;height:34px;cursor:pointer;font-size:1rem;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s;backdrop-filter:blur(8px);
+  color:var(--cyan);line-height:1
+">⚙</button>
+
+<!-- GLOBAL SETTINGS PANEL -->
+<div class="settings-panel" id="settingsPanel" style="top:52px">
+  <div class="sp-title">// configurações //</div>
+  <div class="sp-row">
+    <div class="sp-label">Zoom da interface <span id="zoomVal">100%</span></div>
+    <input type="range" id="zoomSlider" min="60" max="200" value="100" step="5" oninput="applyZoom(this.value)">
+  </div>
+  <div class="sp-row" style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">
+    <button class="btn btn-secondary btn-sm" onclick="applyZoom(100)" style="flex:1">100%</button>
+    <button class="btn btn-secondary btn-sm" onclick="applyZoom(125)" style="flex:1">125%</button>
+    <button class="btn btn-secondary btn-sm" onclick="applyZoom(150)" style="flex:1">150%</button>
+  </div>
+  <div class="sp-row" style="margin-top:8px">
+    <button class="btn btn-secondary btn-sm" onclick="applyZoom(100)" style="width:100%">↺ Resetar Zoom</button>
+  </div>
+  <div class="sp-row" style="margin-top:12px;border-top:1px solid rgba(0,245,255,.1);padding-top:12px">
+    <div class="sp-label" style="margin-bottom:8px">Tema visual</div>
+    <div style="display:flex;flex-direction:column;gap:5px">
+      <button class="theme-btn" id="theme-default" onclick="applyTheme('default')"><span class="theme-dot" style="background:#00f5ff"></span>System Breach</button>
+      <button class="theme-btn" id="theme-dark-matter" onclick="applyTheme('dark-matter')"><span class="theme-dot" style="background:#25ace8"></span>Dark Matter</button>
+      <button class="theme-btn" id="theme-cyberpunk" onclick="applyTheme('cyberpunk')"><span class="theme-dot" style="background:#f3e600"></span>Cyberpunk 2077</button>
+      <button class="theme-btn" id="theme-soft" onclick="applyTheme('soft')"><span class="theme-dot" style="background:#8b9cf4"></span>Soft</button>
+      <button class="theme-btn" id="theme-crimson" onclick="applyTheme('crimson')"><span class="theme-dot" style="background:#ff2244"></span>Crimson</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
