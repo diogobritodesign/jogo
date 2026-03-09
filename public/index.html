@@ -409,6 +409,7 @@ input[type=range]{width:100%;accent-color:var(--cyan);cursor:pointer}
     </div>
     <div class="panel-title">JOGADORES</div>
     <div class="player-list" id="lobbyList"></div>
+    <div id="lobbyRules" style="margin:10px 0;padding:8px;border:1px solid var(--border);border-radius:4px;font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--dim)"></div>
     <div id="hostCtrl" style="display:none">
       <button class="btn btn-primary" id="startBtn" onclick="doStartGame()">▶ INICIAR PARTIDA</button>
     </div>
@@ -526,6 +527,10 @@ input[type=range]{width:100%;accent-color:var(--cyan);cursor:pointer}
     <div class="modal-title">// criar sala //</div>
     <div class="field"><label>Máx. Jogadores (2–6)</label><input type="number" id="maxP" value="6" min="2" max="6"></div>
     <div class="field"><label>Senha da sala (opcional)</label><input id="roomPw" placeholder="deixe vazio para sala pública"></div>
+    <div style="margin:12px 0 14px;padding:10px;border:1px solid var(--border);border-radius:4px">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--cyan);letter-spacing:.15em;margin-bottom:8px">REGRAS DA PARTIDA</div>
+      <div class="chk-row"><input type="checkbox" id="ruleDDoS" checked><label for="ruleDDoS">☢ Ativar DDoS (núcleo / eliminação total)</label></div>
+    </div>
     <button class="btn btn-primary" onclick="doCreateRoom()">⊕ CRIAR</button>
     <button class="btn btn-secondary" onclick="closeModal('modalCreateRoom')">← CANCELAR</button>
   </div>
@@ -561,6 +566,10 @@ input[type=range]{width:100%;accent-color:var(--cyan);cursor:pointer}
       </div>
     </div>
     <div id="pvbDiffDesc" style="font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--dim);text-align:center;margin:10px 0 14px;min-height:2.2em"></div>
+    <div style="margin:0 0 14px;padding:10px;border:1px solid var(--border);border-radius:4px">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--cyan);letter-spacing:.15em;margin-bottom:8px">REGRAS DA PARTIDA</div>
+      <div class="chk-row"><input type="checkbox" id="pvbRuleDDoS" checked><label for="pvbRuleDDoS">☢ Ativar DDoS (núcleo / eliminação total)</label></div>
+    </div>
     <button class="btn btn-primary" onclick="doPlayVsBots()">🤖 INICIAR</button>
     <button class="btn btn-secondary" onclick="closeModal('modalPlayVsBots')">← CANCELAR</button>
   </div>
@@ -829,7 +838,8 @@ async function post(url,body,auth=false){const h={'Content-Type':'application/js
 function doCreateRoom(){
   const max=parseInt(document.getElementById('maxP').value)||6;
   const pw=document.getElementById('roomPw').value.trim()||null;
-  send('create_room',{maxPlayers:Math.min(6,Math.max(2,max)),password:pw});
+  const ddos=document.getElementById('ruleDDoS').checked;
+  send('create_room',{maxPlayers:Math.min(6,Math.max(2,max)),password:pw,rules:{ddos}});
   closeModal('modalCreateRoom');
   document.getElementById('roomPw').value='';
 }
@@ -861,7 +871,8 @@ function setPvbDiff(d){
 }
 function doPlayVsBots(){
   closeModal('modalPlayVsBots');
-  send('play_vs_bots',{botCount:pvbBots,difficulty:pvbDiff});
+  const ddos=document.getElementById('pvbRuleDDoS').checked;
+  send('play_vs_bots',{botCount:pvbBots,difficulty:pvbDiff,rules:{ddos}});
 }
 function doLeaveRoom(){send('leave_room')}
 function doStartGame(){send('start_game')}
@@ -875,6 +886,13 @@ function renderLobby(){
       <div class="avatar avatar-sm" style="margin-right:5px">${p.avatar?'<img src="'+esc(p.avatar)+'">':esc(p.nick).substring(0,2).toUpperCase()}</div><div style="font-weight:600">${esc(p.nick)}</div>
       ${p.id===myRoom.host_id?'<div class="host-tag">HOST</div>':''}
     </div>`).join('');
+  // Show room rules
+  const rules=myRoom.rules||{ddos:true};
+  const rulesEl=document.getElementById('lobbyRules');
+  if(rulesEl){
+    rulesEl.innerHTML='<span style="color:var(--cyan);letter-spacing:.12em">REGRAS:</span> '+
+      (rules.ddos!==false?'<span style="color:var(--magenta)">☢ DDoS ATIVO</span>':'<span style="color:var(--dim)">☢ DDoS DESATIVADO</span>');
+  }
   document.getElementById('hostCtrl').style.display=isHost?'block':'none';
   const sb=document.getElementById('startBtn');
   if(myRoom.players.length<2){sb.disabled=true;sb.textContent='▶ AGUARDANDO ('+myRoom.players.length+'/'+myRoom.max_players+')'}

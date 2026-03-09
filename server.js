@@ -60,6 +60,7 @@ const gamePaused = new Map();    // roomId -> { until, timer, savedRemainingMs }
 const simulatedGames = new Map();// simId  -> { game, interval, stuckCount, startedAt, speed }
 const simSpectators = new Map(); // simId  -> Set<ws>  (admin observers)
 const botRooms = new Map();      // roomId -> { bots: [{id,nick}], difficulty, tickTimer }
+const roomRules = new Map();     // roomId -> { ddos: bool }
 
 // Returns the ID of the player whose turn it currently is (works on the raw game object).
 function getGameCurrentPlayerId(g) {
@@ -721,11 +722,15 @@ wss.on('connection', (ws) => {
       case 'create_room': {
         const info = clientMap.get(ws);
         if (!info?.playerId) return;
-        const {maxPlayers=6, password=null} = payload||{};
+        const {maxPlayers=6, password=null, rules=null} = payload||{};
         const room = db.createRoom(info.playerId, maxPlayers, password||null);
         info.roomId = room.id;
-        // Don't send password back
-        const safeRoom = {...room, password:undefined};
+        // Store game rules chosen by host
+        if (rules && typeof rules === 'object') {
+          roomRules.set(room.id, { ddos: rules.ddos !== false });
+        }
+        // Don't send password back; include rules
+        const safeRoom = {...room, password:undefined, rules: roomRules.get(room.id) || { ddos: true }};
         ws.send(JSON.stringify({type:'room_joined', room:safeRoom}));
         break;
       }
@@ -738,9 +743,10 @@ wss.on('connection', (ws) => {
         const result = db.joinRoom(roomData.id, info.playerId, payload.password||null);
         if (result.error) { ws.send(JSON.stringify({type:'error',message:result.error})); return; }
         info.roomId = result.id;
-        const safeRoom = {...result, password:undefined};
+        const joinRules = roomRules.get(result.id) || { ddos: true };
+        const safeRoom = {...result, password:undefined, rules: joinRules};
         ws.send(JSON.stringify({type:'room_joined', room:safeRoom}));
-        broadcast(result.id, 'room_update', {room:{...result,password:undefined}}, info.playerId);
+        broadcast(result.id, 'room_update', {room:{...result,password:undefined, rules: joinRules}}, info.playerId);
         break;
       }
 
@@ -761,7 +767,8 @@ wss.on('connection', (ws) => {
         if (!room||room.host_id!==info.playerId) { ws.send(JSON.stringify({type:'error',message:'Apenas o host pode iniciar'})); return; }
         if (room.players.length<2) { ws.send(JSON.stringify({type:'error',message:'Mínimo 2 jogadores'})); return; }
         db.setRoomStatus(room.id,'playing');
-        const g = game.createGame(room.id, room.players);
+        const rules = roomRules.get(room.id) || { ddos: true };
+        const g = game.createGame(room.id, room.players, rules);
         activeGames.set(room.id, g);
         gameStartTimes.set(room.id, Date.now());
         broadcast(room.id,'game_started',{});
@@ -777,6 +784,7 @@ wss.on('connection', (ws) => {
         const botCount = Math.min(5, Math.max(1, parseInt(payload?.botCount) || 1));
         const difficulty = ['easy','normal','hard'].includes(payload?.difficulty) ? payload.difficulty : 'normal';
         const diffLabel = { easy: '🟢', normal: '🟡', hard: '🔴' }[difficulty] || '';
+        const pvbRules = payload?.rules && typeof payload.rules === 'object' ? { ddos: payload.rules.ddos !== false } : { ddos: true };
 
         // Create bots (in-memory only — not stored in DB)
         const bots = Array.from({ length: botCount }, (_, i) => ({
@@ -793,7 +801,7 @@ wss.on('connection', (ws) => {
 
         // Start game immediately
         db.setRoomStatus(room.id, 'playing');
-        const g = game.createGame(room.id, allPlayers);
+        const g = game.createGame(room.id, allPlayers, pvbRules);
         activeGames.set(room.id, g);
         gameStartTimes.set(room.id, Date.now());
 

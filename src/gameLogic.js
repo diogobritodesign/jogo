@@ -67,11 +67,12 @@ function drawCard(game) {
   return game.deck.pop();
 }
 
-function createGame(roomId, players) {
+function createGame(roomId, players, options) {
   const n = players.length;
-  // Core (DDoS) is disabled in 2-player games.
+  const opts = options || {};
+  // Core (DDoS) is disabled in 2-player games, or if host explicitly disabled it.
   // 5-6 player games require 4 charges instead of 3.
-  const coreEnabled = n >= 3;
+  const coreEnabled = opts.ddos === false ? false : n >= 3;
   const maxCharges = n >= 5 ? 4 : 3;
 
   const game = {
@@ -108,7 +109,7 @@ function advanceTurn(game) {
   game.waitingFor = [];
 
   // Check DDoS availability
-  game.ddosAvailable = game.core.charges >= game.core.maxCharges;
+  checkDDoS(game);
 
   const current = currentPlayer(game);
   game.log.push(`⚡ Turno de ${current.nick}`);
